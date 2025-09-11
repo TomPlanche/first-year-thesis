@@ -3,10 +3,21 @@
 
 
 #show: conf.with(
-    author: (first_name: "Tom", last_name: "Planche"),
-    company: "Affluences",
-    logo: "assets/affluences_logo.png",
-    page-bg: image("assets/page/page.png", width: 100%, height: 100%),
+    author: (
+        first_name: "Tom",
+        last_name: "Planche",
+    ),
+    cfa_logo: "assets/cfa-numia_logo.png",
+    company: (
+        name: "Affluences",
+        logo: "assets/affluences_logo.png"
+    ),
+    page_bg: "assets/page-low-quality.jpg",
+    school: (
+        logo: "assets/cnam_logo.svg",
+        years: "2025 - 2026",
+    ),
     title: "Rapport d'activités",
-    year: datetime.today().year(),
 )
+
+= Hello !
