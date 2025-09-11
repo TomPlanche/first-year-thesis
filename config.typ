@@ -1,3 +1,11 @@
+/**
+ * Configuration file for my MEMOIRE_S2 project.
+ *
+ * Since heading methods and logic are heavy, I moved them to a separate file.
+ */
+
+#import "heading.typ": *
+
 #let conf(
   author: (
       first_name: "Tom",
@@ -23,22 +31,71 @@
 
     let full-author-name = author.first_name + " " + author.last_name
 
-    // default settings
+    // default settings (SET)
     set document(author: full-author-name, title: title)
+    set figure.caption(separator: [ --- ], position: top)
+    set heading(
+            numbering: (..nums) => {
+                let     level = nums.pos().len()
 
+                let pattern = if level == 1 {
+                    "I -"
+                } else if level == 2 {
+                    "I. I -"
+                } else if level == 3 {
+                    "I. I .I -"
+                } else if level == 4 {
+                    "I. I. I. 1 -"
+                }
+
+                if pattern != none {
+                    numbering(pattern, ..nums)
+                }
+            }
+        )
+    show heading: it => it + v(.5em)
     set page(
-        margin: 1.27cm,
-        fill: black,
         background: [
             #image(page_bg, height: 100%, width: 100%)
         ],
+        fill: black,
+        header: getHeader(full-author-name),
+        margin: (
+            top: 2.5cm,
+            right: 1.5cm,
+            bottom: 2cm,
+            left: 1.5cm
+        ),
+        numbering: (..args) => {
+          let page-num = args.pos().first()
+          if page-num < 3 {
+            none
+          } else {
+            str(page-num)
+          }
+        },
+        number-align: bottom + right,
     )
-
+    set par(justify: true)
     set text(
         fill: white,
         font: body-font,
         lang: "fr"
     )
+
+    let side-padding = .5em;
+    show raw.where(block: false) : it => h(side-padding) + box(
+        fill: gray.lighten(50%),
+        stroke: black,
+        outset: (x: .5em, y: .5em),
+        radius: 4pt,
+
+        {
+            set text(fill: black);
+
+            it
+        }
+    ) + h(side-padding)
 
     align(top,
         grid(
