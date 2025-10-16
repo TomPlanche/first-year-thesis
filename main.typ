@@ -1,22 +1,16 @@
-#import "config.typ": *
+#import "@preview/clean-cnam-template:1.1.0": *
+#import "custom-outline.typ": *
 
 
-#show: conf.with(
-    author: (
-        first_name: "Tom",
-        last_name: "Planche",
-    ),
-    cfa_logo: "assets/cfa-numia_logo.png",
-    company: (
-        name: "Affluences",
-        logo: "assets/affluences_logo.png"
-    ),
-    page_bg: "assets/page-low-quality.jpg",
-    school: (
-        logo: "assets/cnam_logo.svg",
-        years: "2025 - 2026",
-    ),
+#show: clean-cnam-template.with(
+    author: "Tom Planche",
     title: "Rapport d'activités",
+    outline-code: tree-outline(
+        symbol-font: "Snap-it mono-1.6",
+        text-font: "Zed Plex Mono",
+        number-font: "Zed Plex Mono",
+        text-size: 2em,
+    ),
 )
 
 = Remerciements
