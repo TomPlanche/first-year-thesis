@@ -1,4 +1,4 @@
-#import "@preview/clean-cnam-template:1.1.0": *
+#import "@local/clean-cnam-template:1.2.0": *
 #import "custom-outline.typ": *
 
 
@@ -37,7 +37,7 @@ L'environnement technique chez Affluences repose sur une infrastructure moderne 
 L'entreprise utilise un ensemble d'outils standardisés pour tous les développeurs :
 
 #my-block(
-    alignment: left
+    content-align: left
 )[
   *IDE* : Les développeurs peuvent choisir leur environnement (VS Code, WebStorm, ou autres) \
   *Gestion de versions* : Git avec GitLab comme plateforme de dépôt \
@@ -77,14 +77,14 @@ Pour la visualisation et les tests, l'entreprise met à disposition :
 L'accès aux ressources internes est sécurisé par plusieurs mécanismes :
 
 #my-block(
-    alignment: left
+    content-align: left,
+    title: "Cloudflare Access et Tunnels"
 )[
-  *Cloudflare Access et Tunnels :*
 
   Affluences utilise Cloudflare Access comme reverse-proxy authentifié pour protéger les services privés. L'authentification se fait via les comptes Google Affluences. Cette solution permet d'accéder aux bases de données et APIs internes sans VPN traditionnel.
 ]
 
-Pour les connexions aux environnements distants, l'entreprise utilise également *Fast Travel*, une solution VPN basée sur Wireguard, avec deux réseaux distincts :
+Pour les connexions aux environnements distants, l'entreprise utilise également *Fast Travel*, une solution VPN interne basée sur Wireguard, avec deux réseaux distincts :
 - Réseau de production : `prod.affluences.network` (172.30.0.0/16)
 - Réseau de staging : `staging.affluences.network` (172.31.0.0/16)
 
@@ -141,9 +141,9 @@ Affluences applique une méthodologie Agile structurée avec des étapes de dév
 Le processus d'intégration et de déploiement continu suit des étapes standardisées :
 
 #my-block(
-    alignment: left
+    content-align: left,
+    title: "Pipeline Staging"
 )[
-  *Pipeline Staging :*
   1. Compilation
   2. Tests automatisés
   3. Publication sur le registry
@@ -151,9 +151,9 @@ Le processus d'intégration et de déploiement continu suit des étapes standard
 ]
 
 #my-block(
-    alignment: left
+    content-align: left,
+    title: "Pipeline Production"
 )[
-  *Pipeline Production :*
   1. Compilation
   2. Tests automatisés
   3. Publication sur le registry
@@ -199,9 +199,9 @@ L'architecture cible sépare trois couches :
 L'équipe applique des standards stricts pour maintenir la qualité du code :
 
 #my-block(
-    alignment: left
+    content-align: left,
+    title: "Logging"
 )[
-  *Logging :*
   - Format obligatoire : logfmt (structuré)
   - Logs en une seule ligne
   - Timestamps en UTC ISO 8601 avec précision milliseconde
@@ -210,9 +210,9 @@ L'équipe applique des standards stricts pour maintenir la qualité du code :
 ]
 
 #my-block(
-    alignment: left
+    content-align: left,
+    title: "Variables d'environnement"
 )[
-  *Variables d'environnement :*
   - Nommage en UPPER_CASE avec underscores
   - Préfixes pour grouper les variables liées
   - Unités explicites dans les noms (ex: `_SECONDS`, `_MILLISECONDS`)
