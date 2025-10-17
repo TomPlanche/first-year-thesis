@@ -1,0 +1,190 @@
+commit 5658b19b879cdc82aec5bcb983a475fc44bab2f6
+Author: Tom Planche <tom.planche@affluences.com>
+Date:   Fri Oct 10 17:23:29 2025 +0200
+
+    fix(stats): Optimize attendance stats query for long date ranges INT-4013
+
+diff --git a/.DS_Store b/.DS_Store
+deleted file mode 100644
+index da07aa6..0000000
+Binary files a/.DS_Store and /dev/null differ
+diff --git a/app/app.module.ts b/app/app.module.ts
+index ba69a0d..496e1b6 100644
+--- a/app/app.module.ts
++++ b/app/app.module.ts
+@@ -3,6 +3,7 @@ import { AttendanceModule } from './modules/attendance/attendance.module';
+ import { CoreModule } from './core/core.module';
+ import { AttendanceStatsResolver } from './resolvers/AttendanceStatsResolver';
+ import { AttendanceStatsAggregationMetricsResolver } from './resolvers/AttendanceStatsMetricsResolver';
++import { AttendanceStatsController } from './controllers/attendance-stats/AttendanceStatsController';
+ import { DemoSettingsResolver } from './resolvers/DemoSettingsResolver';
+ import { ForecastsResolver } from './resolvers/ForecastResolver';
+ import { ViewModule } from './modules/view/view.module';
+@@ -27,6 +28,7 @@ export class AppModule {
+         }
+         const serviceContainer = new Container();
+         serviceContainer.load(CoreModule.forRoot());
++        serviceContainer.bind<AttendanceStatsController>(AttendanceStatsController).toSelf().inSingletonScope();
+         serviceContainer.bind<AttendanceStatsResolver>(AttendanceStatsResolver).toSelf().inSingletonScope();
+         serviceContainer.bind<DemoSettingsResolver>(DemoSettingsResolver).toSelf().inSingletonScope();
+         serviceContainer.bind<ForecastsResolver>(ForecastsResolver).toSelf().inSingletonScope();
+diff --git a/app/controllers/attendance-stats/AttendanceStatsController.ts b/app/controllers/attendance-stats/AttendanceStatsController.ts
+index 9ce307c..c0d74e7 100644
+--- a/app/controllers/attendance-stats/AttendanceStatsController.ts
++++ b/app/controllers/attendance-stats/AttendanceStatsController.ts
+@@ -1,12 +1,29 @@
++import { injectable } from 'inversify';
+ import { AttendanceStatsRepository } from '../../repositories/AttendanceStatsRepository';
+ import { AttendanceStatsArgs } from '../../schemas/attendance-stats/AttendanceStatsArgs';
+ import { AttendanceStatsAggregationMetrics } from '../../schemas/attendance-stats/AttendanceStatsMetrics';
++import { SensorsInternalRepository } from '../../modules/attendance/domain/sensors-internal-repository';
+
++@injectable()
+ export class AttendanceStatsController {
+-    public static async getOccupanciesMetricsForSite(
+-        args: AttendanceStatsArgs
+-    ): Promise<AttendanceStatsAggregationMetrics> {
+-        const minMaxOccupancy = await AttendanceStatsRepository.getMinMaxOccupancy(args);
++    constructor(private sensorsRepository: SensorsInternalRepository) {}
++
++    private async getMeasuringSetIdsForSite(siteId: number): Promise<string[]> {
++        const measuringSets = await this.sensorsRepository.getMeasuringSets({
++            siteIds: [siteId],
++        });
++
++        return measuringSets.map(ms => ms.measuringSetId);
++    }
++
++    public async getOccupanciesMetricsForSite(args: AttendanceStatsArgs): Promise<AttendanceStatsAggregationMetrics> {
++        const measuringSetIds = await this.getMeasuringSetIdsForSite(args.siteId);
++        const minMaxOccupancy = await AttendanceStatsRepository.getMinMaxOccupancy(
++            measuringSetIds,
++            args.fromDatetimeUtc,
++            args.toDatetimeUtc
++        );
++
+         return {
+             max: {
+                 value: minMaxOccupancy.maxOccupancy ?? null,
+@@ -17,10 +34,14 @@ export class AttendanceStatsController {
+         };
+     }
+
+-    public static async getWaitingMetricsForSite(
+-        args: AttendanceStatsArgs
+-    ): Promise<AttendanceStatsAggregationMetrics> {
+-        const minMaxWaiting = await AttendanceStatsRepository.getMinMaxWaitingTime(args);
++    public async getWaitingMetricsForSite(args: AttendanceStatsArgs): Promise<AttendanceStatsAggregationMetrics> {
++        const measuringSetIds = await this.getMeasuringSetIdsForSite(args.siteId);
++        const minMaxWaiting = await AttendanceStatsRepository.getMinMaxWaitingTime(
++            measuringSetIds,
++            args.fromDatetimeUtc,
++            args.toDatetimeUtc
++        );
++
+         return {
+             max: {
+                 value: minMaxWaiting.maxWaiting ?? null,
+diff --git a/app/repositories/AttendanceStatsRepository.ts b/app/repositories/AttendanceStatsRepository.ts
+index 66a625b..18159da 100644
+--- a/app/repositories/AttendanceStatsRepository.ts
++++ b/app/repositories/AttendanceStatsRepository.ts
+@@ -1,22 +1,27 @@
+ import { Database } from '../database';
+ import { HistoryEntity } from '../modules/attendance/entities/history.entity';
+-import { AttendanceStatsArgs } from '../schemas/attendance-stats/AttendanceStatsArgs';
+
+ export class AttendanceStatsRepository {
+     public static async getMinMaxOccupancy(
+-        args: AttendanceStatsArgs
++        measuringSetIds: string[],
++        fromDatetimeUtc: string,
++        toDatetimeUtc: string
+     ): Promise<{ maxOccupancy: number; minOccupancy: number } | null> {
++        if (!measuringSetIds || measuringSetIds.length === 0) {
++            return { maxOccupancy: null, minOccupancy: null };
++        }
++
+         const result: { max_occupancy: number; min_occupancy: number } = await Database.dataSource
+             .createQueryBuilder()
+-            .select('MAX(JSON_EXTRACT(h.data_points, "$.occupancy"))', 'max_occupancy')
+-            .addSelect('MIN(JSON_EXTRACT(h.data_points, "$.occupancy"))', 'min_occupancy')
++            .select('MAX(h.data_points -> "$.occupancy")', 'max_occupancy')
++            .addSelect('MIN(h.data_points -> "$.occupancy")', 'min_occupancy')
+             .from(HistoryEntity, 'h')
+-            .where('JSON_EXTRACT(h.contextual_data, "$.site_id") = :siteId', { siteId: args.siteId })
++            .where('h.measuring_set_id IN (:...measuringSetIds)', { measuringSetIds })
+             .andWhere('h.record_datetime_utc BETWEEN :from AND :to', {
+-                from: args.fromDatetimeUtc,
+-                to: args.toDatetimeUtc,
++                from: fromDatetimeUtc,
++                to: toDatetimeUtc,
+             })
+-            .andWhere('JSON_EXTRACT(h.data_points, "$.occupancy") IS NOT NULL')
++            .andWhere('h.data_points -> "$.occupancy" IS NOT NULL')
+             .getRawOne();
+
+         return {
+@@ -26,19 +31,25 @@ export class AttendanceStatsRepository {
+     }
+
+     public static async getMinMaxWaitingTime(
+-        args: AttendanceStatsArgs
++        measuringSetIds: string[],
++        fromDatetimeUtc: string,
++        toDatetimeUtc: string
+     ): Promise<{ maxWaiting: number; minWaiting: number } | null> {
++        if (!measuringSetIds || measuringSetIds.length === 0) {
++            return { maxWaiting: null, minWaiting: null };
++        }
++
+         const result: { max_waiting: number; min_waiting: number } = await Database.dataSource
+             .createQueryBuilder()
+-            .select('MAX(JSON_EXTRACT(h.data_points, "$.waiting_time"))', 'max_waiting')
+-            .addSelect('MIN(JSON_EXTRACT(h.data_points, "$.waiting_time"))', 'min_waiting')
++            .select('MAX(h.data_points -> "$.waiting_time")', 'max_waiting')
++            .addSelect('MIN(h.data_points -> "$.waiting_time")', 'min_waiting')
+             .from(HistoryEntity, 'h')
+-            .where('JSON_EXTRACT(h.contextual_data, "$.site_id") = :siteId', { siteId: args.siteId })
++            .where('h.measuring_set_id IN (:...measuringSetIds)', { measuringSetIds })
+             .andWhere('h.record_datetime_utc BETWEEN :from AND :to', {
+-                from: args.fromDatetimeUtc,
+-                to: args.toDatetimeUtc,
++                from: fromDatetimeUtc,
++                to: toDatetimeUtc,
+             })
+-            .andWhere('JSON_EXTRACT(h.data_points, "$.waiting_time") IS NOT NULL')
++            .andWhere('h.data_points -> "$.waiting_time" IS NOT NULL')
+             .getRawOne();
+
+         return {
+diff --git a/app/resolvers/AttendanceStatsResolver.ts b/app/resolvers/AttendanceStatsResolver.ts
+index c627e38..6231521 100644
+--- a/app/resolvers/AttendanceStatsResolver.ts
++++ b/app/resolvers/AttendanceStatsResolver.ts
+@@ -10,6 +10,8 @@ import { AttendanceStatsController } from '../controllers/attendance-stats/Atten
+ @injectable()
+ @Resolver(() => AttendanceStatsMetrics)
+ export class AttendanceStatsResolver {
++    constructor(private attendanceStatsController: AttendanceStatsController) {}
++
+     @Query(() => AttendanceStatsMetrics)
+     async getAttendanceStatsForAPeriod(
+         @Args() args: AttendanceStatsArgs,
+@@ -24,7 +26,7 @@ export class AttendanceStatsResolver {
+         @Root() data: AttendanceStatsMetrics,
+         @Ctx() context: { attendanceStatsArgs: AttendanceStatsArgs }
+     ): Promise<AttendanceStatsAggregationMetrics> {
+-        return AttendanceStatsController.getOccupanciesMetricsForSite(context.attendanceStatsArgs);
++        return this.attendanceStatsController.getOccupanciesMetricsForSite(context.attendanceStatsArgs);
+     }
+
+     @FieldResolver(() => AttendanceStatsAggregationMetrics)
+@@ -32,6 +34,6 @@ export class AttendanceStatsResolver {
+         @Root() data: AttendanceStatsMetrics,
+         @Ctx() context: { attendanceStatsArgs: AttendanceStatsArgs }
+     ): Promise<AttendanceStatsAggregationMetrics> {
+-        return AttendanceStatsController.getWaitingMetricsForSite(context.attendanceStatsArgs);
++        return this.attendanceStatsController.getWaitingMetricsForSite(context.attendanceStatsArgs);
+     }
+ }

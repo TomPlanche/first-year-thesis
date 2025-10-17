@@ -3,8 +3,14 @@
   text-font: "Courier New",
   number-font: "Courier New",
   text-size: 1em,
+  max-depth: none,  // Maximum heading level to include (none = all levels)
 ) = context {
   let headings = query(selector(heading))
+
+  // Filter by depth if max-depth is specified
+  if max-depth != none {
+    headings = headings.filter(h => h.level <= max-depth)
+  }
 
   if headings.len() == 0 {
     return []
