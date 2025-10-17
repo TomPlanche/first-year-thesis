@@ -3,6 +3,7 @@
   text-font: "Courier New",
   number-font: "Courier New",
   text-size: 1em,
+  line-spacing: 0.4em,  // Line spacing to make box-drawing characters join properly
   max-depth: none,  // Maximum heading level to include (none = all levels)
 ) = context {
   let headings = query(selector(heading))
@@ -174,10 +175,13 @@
     width: 100%,
     inset: 0.5em,
     radius: 0.25em,
-    text(
-      font: symbol-font,
-      size: text-size,
-      raw(output, block: true, lang: none)
-    )
+    {
+      set par(leading: line-spacing)
+      text(
+        font: symbol-font,
+        size: text-size,
+        raw(output, block: true, lang: none)
+      )
+    }
   )
 }
