@@ -48,6 +48,7 @@
       text: h.body,
       level: h.level,
       page: h.location().page(),
+      location: h.location(),
       parent: none,
     ))
 
@@ -68,7 +69,7 @@
         .filter(((i, child)) => child.parent == idx)
         .map(((i, child)) => build-node(i))
 
-      (text: item.text, page: item.page, children: children)
+      (text: item.text, page: item.page, location: item.location, children: children)
     }
 
     items.enumerate()
@@ -105,9 +106,11 @@
     }
 
     line += if is-last { "└ " } else { "├ " }
-    line += content-to-str(child.text)
 
-    result.push((text: line, page: child.page))
+    let text-str = content-to-str(child.text)
+    let full-line = line + text-str
+
+    result.push((prefix: line, text: child.text, text-str: text-str, full-line: full-line, page: child.page, location: child.location))
 
     if child.children.len() > 0 {
       let new-ancestors = ancestor-is-last + (is-last,)
@@ -130,9 +133,12 @@
       line += "│"
     }
 
-    line += "└ " + content-to-str(title.text)
+    line += "└ "
 
-    lines.push((text: line, page: title.page))
+    let text-str = content-to-str(title.text)
+    let full-line = line + text-str
+
+    lines.push((prefix: line, text: title.text, text-str: text-str, full-line: full-line, page: title.page, location: title.location))
 
     if title.children.len() > 0 {
       for (j, child) in title.children.enumerate() {
@@ -142,46 +148,37 @@
     }
   }
 
-  // Find the maximum line length using grapheme clusters for accurate visual width
-  let max-len = 0
-  for line in lines {
-    let visual-len = line.text.clusters().len()
-    if visual-len > max-len {
-      max-len = visual-len
-    }
-  }
+  // Find max page number to determine padding width
+  let max-page = lines.fold(0, (acc, line) => calc.max(acc, line.page))
+  let max-page-width = str(max-page).len()
 
-  // Build output string with right-aligned page numbers
-  let output = header
-
-  for line in lines {
-    let visual-len = line.text.clusters().len()
-    let padding = max-len - visual-len + 1
-
-    output += line.text
-
-    // Add dots for padding
-    for i in range(padding) {
-      output += "."
-    }
-
-    output += " " + str(line.page) + "\n"
-  }
-
-  // Render as raw block with custom font
-  // Note: For proper alignment with multiple fonts, all fonts must be monospace
-  // with identical character widths. The symbol-font is used as the base.
+  // Render with clickable links
   block(
     width: 100%,
     inset: 0.5em,
     radius: 0.25em,
     {
-      set par(leading: line-spacing)
-      text(
-        font: symbol-font,
-        size: text-size,
-        raw(output, block: true, lang: none)
-      )
+      set par(leading: line-spacing, justify: false)
+      set text(size: text-size)
+
+      // Header
+      text(font: symbol-font)[#raw(header, block: false, lang: none)]
+
+      // Lines with clickable links
+      for line in lines {
+        // Pad page number with leading spaces to align right
+        let page-str = str(line.page)
+        let padding = " " * (max-page-width - page-str.len())
+        let padded-page = padding + page-str
+
+        // Build the line with clickable text, using 1fr box for dot leaders to right-align page numbers
+        box(width: 100%)[
+          #text(font: symbol-font)[#raw(line.prefix, block: false, lang: none)]#link(line.location)[#text(font: text-font)[#line.text]]
+          #box(width: 1fr, repeat[.])
+          #text(font: number-font)[#padded-page]
+        ]
+        linebreak()
+      }
     }
   )
 }

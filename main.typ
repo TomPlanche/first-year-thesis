@@ -1,4 +1,4 @@
-#import "@local/clean-cnam-template:1.2.0": *
+#import "@local/clean-cnam-template:1.3.0": *
 #import "custom-outline.typ": *
 
 
@@ -9,9 +9,10 @@
         symbol-font: "Snap-it mono-1.6",
         text-font: "Zed Plex Mono",
         number-font: "Zed Plex Mono",
-        text-size: 2em,
+        text-size: 1.25em,
         max-depth: 3
     ),
+    main-color: "0B607E"
 )
 
 = Remerciements
@@ -19,9 +20,13 @@
 
 = Introduction
 
-Dans le cadre de ma deuxième année de formation d'ingénieur au CNAM Paris, j'ai intégré en alternance l'équipe backend d'Affluences,
-une entreprise française innovante spécialisée dans la gestion de l'affluence et l'optimisation des flux de visiteurs.
-J'intègre la partie *Internal Services* en tant que développeur *backend*.
+Ce rapport dresse le bilan de mon expérience en entreprise au cours de l'année scolaire 2025-2026.
+Ce parcours s'inscrit dans le cadre de ma formation d'ingénieur en informatique et systèmes d'information,
+réalisée en alternance au sein de l'École d’Ingénieur du Conservatoire National des Arts et Métiers (Ei-CNAM)
+
+J'ai donc intégré en alternance l'équipe backend d'Affluences, une entreprise française innovante spécialisée dans
+la gestion de l'affluence et l'optimisation des flux de visiteurs.
+J'intègre la partie *Internal Services* en tant que *développeur backend*.
 
 
 = Environnement de Travail
@@ -257,3 +262,225 @@ Cette organisation permet une collaboration efficace tout en maintenant la traç
 == Conclusion partielle
 
 L'environnement de travail chez Affluences se caractérise par une infrastructure technique moderne et des processus bien définis. L'utilisation d'outils standardisés et de méthodologies éprouvées facilite l'intégration des nouveaux développeurs et assure la qualité des livrables. L'approche microservices couplée à une forte culture DevOps permet à l'équipe de maintenir et faire évoluer efficacement une infrastructure complexe au service de nombreux clients.
+
+= Missions
+
+== Optimisation de la requête `getAttendanceStatsForAPeriod`
+
+=== Contexte et problématique
+
+La requête GraphQL `getAttendanceStatsForAPeriod` présentait des problèmes de performance critiques pour les plages de dates supérieures à un mois. Les requêtes prenaient plus de 90 secondes pour des périodes de 30 jours et crashaient complètement pour des requêtes sur une année entière.
+
+#my-block(
+    content-align: left,
+    title: "Symptômes observés :",
+    width: 100%,
+)[
+  - Requête 30 jours : *90+ secondes*
+  - Requête 1 an : *Timeout* (crash complet)
+  - Dégradation exponentielle avec l'augmentation de la période
+  - Impact négatif sur l'expérience utilisateur des dashboards
+]
+
+=== Analyse technique de la cause racine
+
+Le problème résidait dans l'architecture des requêtes du `AttendanceStatsRepository`, qui filtraient les données par `site_id` en utilisant l'extraction JSON :
+
+#code(
+    ```sql
+    WHERE JSON_EXTRACT(h.contextual_data, "$.site_id") = :siteId
+      AND h.record_datetime_utc BETWEEN :from AND :to
+      AND JSON_EXTRACT(h.data_points, "$.occupancy") IS NOT NULL
+    ```
+)
+
+#definition(title: "Limitations de l'approche initiale")[
+  - Impossibilité d'utiliser l'index de clé primaire `(measuring_set_id, record_datetime_utc)`
+  - Nécessité d'un parcours complet de la table (*full table scan*)
+  - Parsing JSON pour chaque ligne de la table
+  - Performance dégradant de manière exponentielle avec la taille de la période
+]
+
+=== Solution architecturale
+
+L'optimisation a consisté à inverser la stratégie de requêtage pour exploiter l'indexation existante de la base de données.
+
+#my-block(
+    content-align: left,
+    title: "Principe de la solution :",
+    width: 100%,
+)[
+  *Approche initiale (lente)* : \
+  `site_id → [Scan complet + parsing JSON] → Résultats`
+
+  *Nouvelle approche (optimisée)* : \
+  `site_id → [Appel API] → measuring_set_ids → [Requête indexée] → Résultats`
+]
+
+Au lieu de requêter directement par `site_id` (stocké dans un champ JSON), la solution procède en deux étapes :
+
+1. *Récupération des measuring set IDs* via le `SensorsInternalHttpRepository`
+2. *Requête par `measuring_set_id`* (colonne indexée) au lieu de `site_id` (champ JSON)
+
+Cette approche ajoute un appel API léger (~10-20ms) mais transforme la requête base de données de O(n) en O(log n).
+
+=== Modifications techniques implémentées
+
+==== Refactoring du contrôleur
+
+Le `AttendanceStatsController` a été rendu injectable avec injection de dépendances :
+
+#code(
+    lang: "typescript",
+    ```typescript
+    @injectable()
+    export class AttendanceStatsController {
+        constructor(private sensorsRepository: SensorsInternalRepository) {}
+
+        private async getMeasuringSetIdsForSite(siteId: number): Promise<string[]> {
+            const measuringSets = await this.sensorsRepository.getMeasuringSets({
+                siteIds: [siteId],
+                typeIn: ['IN_OUT_OCCUPANCY', 'ENTITY_COUNT_OCCUPANCY', 'WAITING_TIME'],
+            });
+            return measuringSets.map(ms => ms.measuringSetId);
+        }
+    }
+    ```
+)
+
+==== Optimisation des requêtes repository
+
+Les signatures de méthodes ont été modifiées pour accepter des `measuring_set_ids` :
+
+#code(
+    ```typescript
+    public static async getMinMaxOccupancy(
+        measuringSetIds: string[],
+        fromDatetimeUtc: string,
+        toDatetimeUtc: string
+    ): Promise<{ maxOccupancy: number; minOccupancy: number } | null>
+    ```
+)
+
+Les requêtes SQL ont été optimisées pour exploiter l'index :
+
+#code(
+    ```sql
+    WHERE h.measuring_set_id IN (:...measuringSetIds)
+      AND h.record_datetime_utc BETWEEN :from AND :to
+      AND h.data_points -> "$.occupancy" IS NOT NULL
+    ```
+)
+
+#example(title: "Améliorations techniques")[
+  - Utilisation de l'index de clé primaire
+  - Remplacement de `JSON_EXTRACT()` par l'opérateur `->` (plus lisible)
+  - Ajout de vérifications de nullité pour les tableaux vides
+  - Binding TypeORM d'arrays avec la syntaxe `:...array` pour les clauses `IN`
+]
+
+==== Injection de dépendances
+
+Le pattern d'injection de dépendances a été correctement implémenté dans le conteneur IoC :
+
+#code(
+    ```typescript
+    // app.module.ts
+    serviceContainer.bind<AttendanceStatsController>(AttendanceStatsController)
+        .toSelf()
+        .inSingletonScope();
+
+    // AttendanceStatsResolver.ts
+    @injectable()
+    export class AttendanceStatsResolver {
+        constructor(private attendanceStatsController: AttendanceStatsController) {}
+    }
+    ```
+)
+
+Cette approche améliore la testabilité et suit les patterns architecturaux existants du projet.
+
+=== Résultats et impact
+
+#my-block(
+    content-align: left,
+    title: "Gains de performance mesurés"
+)[
+  #table(
+    columns: (auto, auto, auto, auto),
+    align: (left, right, right, left),
+    [*Métrique*], [*Avant*], [*Après*], [*Amélioration*],
+    [Requête 30 jours], [90+ secondes], [40 ms], [×2 250],
+    [Requête 1 an], [Crash (timeout)], [220 ms], [∞ → 220 ms],
+    [Opération DB], [Full table scan], [Index seek], [—],
+    [Comportement], [Dégradation exp.], [Performance linéaire], [—],
+  )
+]
+
+=== Explication des optimisations clés
+
+==== Exploitation de l'index composite
+
+L'index de clé primaire `(measuring_set_id, record_datetime_utc)` est désormais pleinement exploité :
+
+#definition(title: "Stratégie d'indexation")[
+  - `measuring_set_id IN (...)` restreint aux partitions pertinentes
+  - `record_datetime_utc BETWEEN` utilise la seconde partie de l'index composite
+  - MySQL peut ignorer complètement les données non pertinentes
+]
+
+==== Trade-off et analyse coût-bénéfice
+
+- *Coût ajouté* : 1 appel API pour récupérer les measuring set IDs (~10-20 ms)
+- *Coût économisé* : Élimination du scan complet avec parsing JSON (90+ secondes)
+- *Gain net* : Amélioration de performance de ×2 250
+
+=== Impact en production
+
+Cette optimisation a permis de :
+
+- Rendre les dashboards réactifs pour des statistiques annuelles en temps réel
+- Réduire drastiquement la charge sur la base de données
+- Éliminer les erreurs de timeout pour les requêtes multi-mois
+- Améliorer significativement l'expérience utilisateur avec des réponses instantanées
+
+=== Conformité aux patterns existants
+
+L'optimisation suit le même pattern déjà utilisé avec succès dans :
+- `app/modules/attendance/infrastructure/record-history-mysql.repository.ts`
+- `app/modules/attendance/services/attendance.service.ts`
+
+La solution réutilise l'infrastructure existante (`SensorsInternalHttpRepository`) et respecte le pattern repository utilisé dans l'ensemble du codebase.
+
+=== Enseignements techniques
+
+#my-block(
+    content-align: left,
+    title: "Leçons clés"
+)[
+  1. *Conscience des index* : Toujours concevoir les requêtes autour des index disponibles
+  2. *Prudence avec les colonnes JSON* : Le filtrage sur des champs JSON empêche l'utilisation d'index
+  3. *Requêtes en deux étapes* : Ajouter une étape de lookup légère peut être plus rapide qu'une requête unique non optimisée
+  4. *Mesurer systématiquement* : L'amélioration de ×2 250 a été validée par des mesures en production réelle
+  5. *Suivre les patterns existants* : La solution réutilise l'architecture établie du projet
+]
+
+#my-block(
+    content-align: left,
+    title: "Concepts techniques approfondis"
+)[
+  - *Index composites* : Compréhension du fonctionnement de `(measuring_set_id, record_datetime_utc)`
+  - *TypeORM array binding* : Syntaxe `:...array` pour les clauses `IN`
+  - *Opérateurs JSON MySQL* : Utilisation de `->` au lieu de `JSON_EXTRACT()`
+  - *Injection de dépendances* : Patterns IoC pour améliorer testabilité et maintenabilité
+]
+
+#example(title: "Fichiers modifiés")[
+  - `app/controllers/attendance-stats/AttendanceStatsController.ts` — Ajout DI et résolution measuring sets
+  - `app/repositories/AttendanceStatsRepository.ts` — Optimisation requêtes avec colonnes indexées
+  - `app/resolvers/AttendanceStatsResolver.ts` — Injection contrôleur au lieu d'appels statiques
+  - `app/app.module.ts` — Enregistrement du contrôleur dans le conteneur IoC
+]
+
+*Date de réalisation* : Octobre 2025 \
+*Statut* : ✅ Déployé en production et validé avec du trafic réel
