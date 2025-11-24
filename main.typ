@@ -1,6 +1,41 @@
 #import "@local/clean-cnam-template:1.3.0": *
+#import "@preview/glossy:0.8.0": *
 #import "custom-outline.typ": *
+#import "glossary.typ": my-glossary
 
+// Custom glossary theme with clickable links
+#let theme-table-glossary = (
+  section: (title, body) => {
+    set text(font: "Zed Plex Mono", size: 0.9em)
+    body
+  },
+  group: (name, index, total, body) => {
+    if name != "" {
+      [=== #name]
+    }
+    table(
+      columns: (30%, 1fr),
+      inset: 6pt,
+      stroke: 0.5pt + luma(180),
+      align: (left, left),
+      table.header(
+        [*Terme*], [*Definition*],
+      ),
+      ..body.flatten()
+    )
+    v(1em)
+  },
+  entry: (entry, index, total) => {
+    // entry.label creates the anchor for linking
+    let term = if entry.long != none and entry.long != entry.short {
+      [*#entry.short* #entry.label -- #entry.long]
+    } else {
+      [*#entry.short* #entry.label]
+    }
+    let desc = if entry.description != none { entry.description } else { [] }
+    (term, desc)
+  }
+)
 
 #show: clean-cnam-template.with(
     author: "Tom Planche",
@@ -14,6 +49,30 @@
     ),
     main-color: "0B607E"
 )
+
+// Fonction pour créer un terme cliquable vers le glossaire
+// Modes: "short" (défaut), "long", "both", "pl" (pluriel)
+#let g(key, mode: "short") = {
+  let entry = my-glossary.at(key, default: none)
+  if entry != none {
+    let display = if mode == "long" and entry.at("long", default: none) != none {
+      entry.long
+    } else if mode == "both" and entry.at("long", default: none) != none {
+      entry.long + " (" + entry.short + ")"
+    } else if mode == "pl" {
+      entry.short + "s"
+    } else {
+      entry.short
+    }
+    // Créer un lien vers le label spécifique du terme (gloss-key)
+    let target-label = label("gloss-" + key)
+    link(target-label)[#text(fill: rgb("0B607E"))[#underline[#display]]#super[#text(size: 0.6em, fill: rgb("0B607E"))[G]]]
+  } else {
+    [*#key*]
+  }
+}
+
+#show: init-glossary.with(my-glossary)
 
 = Remerciements
 
@@ -37,9 +96,9 @@ Ce rapport dresse le bilan de mon expérience en entreprise au cours de l'année
 Ce parcours s'inscrit dans le cadre de ma formation d'ingénieur en informatique et systèmes d'information,
 réalisée en alternance au sein de l'École d’Ingénieur du Conservatoire National des Arts et Métiers (EI-CNAM)
 
-J'ai donc intégré en alternance l'équipe backend d'#link(<affluences>)[Affluences], une entreprise française innovante spécialisée dans
+J'ai donc intégré en alternance l'équipe #g("backend") d'#link(<affluences>)[Affluences], une entreprise française innovante spécialisée dans
 la gestion de l'affluence et l'optimisation des flux de visiteurs.
-J'intègre la partie *Internal Services* en tant que *développeur backend*.
+J'intègre la partie *Internal Services* en tant que *développeur #g("backend")*.
 
 == Affluences <affluences>
 
@@ -47,9 +106,9 @@ Affluences est une entreprise française fondée en 2014, aujourd'hui leader eur
 
 Avec plus de 2 000 lieux équipés et une application mobile utilisée par plus d'un million de personnes, Affluences a su prouver la pertinence de sa solution. L'entreprise a réalisé une levée de fonds de 4 millions d'euros en 2020 et compte parmi ses clients des institutions de renom comme le Musée du Louvre, la Tour Eiffel, la SNCF et l'Université de Cambridge.
 
-La force d'Affluences réside dans sa solution technologique complète et intégrée, qui combine des capteurs IoT propriétaires pour la collecte de données, des algorithmes prédictifs pour anticiper les pics d'activité, et des plateformes de communication multi-canaux pour informer les utilisateurs en temps réel.
+La force d'Affluences réside dans sa solution technologique complète et intégrée, qui combine des capteurs #g("iot") propriétaires pour la collecte de données, des algorithmes prédictifs pour anticiper les pics d'activité, et des plateformes de communication multi-canaux pour informer les utilisateurs en temps réel.
 
-C'est au sein de cette `scale-up` innovante d'une cinquantaine de personnes, qui promeut une culture d'autonomie et d'actionnariat salarié, que j'ai eu l'opportunité de réaliser mon alternance.
+C'est au sein de cette #g("scaleup") innovante d'une cinquantaine de personnes, qui promeut une culture d'autonomie et d'actionnariat salarié, que j'ai eu l'opportunité de réaliser mon alternance.
 
 
 
@@ -72,18 +131,18 @@ L'écosystème technique d'Affluences est riche et moderne, conçu pour supporte
 
 ==== Stack technique principale
 
-L'architecture backend repose sur une approche microservices, utilisant principalement *Node.js* et *Python* pour le traitement des données. La communication asynchrone entre les services est assurée par *RabbitMQ*. Côté frontend, les applications web s'appuient sur *Angular*, tandis que l'application mobile a été développée avec *Flutter*, le framework cross-platform de Google.
+L'architecture #g("backend") repose sur une approche #g("microservices"), utilisant principalement #g("nodejs") et *Python* pour le traitement des données. La communication asynchrone entre les services est assurée par #g("rabbitmq"). Côté #g("frontend"), les applications web s'appuient sur #g("angular"), tandis que l'application mobile a été développée avec #g("flutter"), le framework cross-platform de Google.
 
 ==== Langages et frameworks
 
 L'équipe de développement maîtrise un large éventail de langages et frameworks pour répondre aux besoins spécifiques de chaque partie de la plateforme :
-- *Backend :* Node.js, Python.
-- *Frontend :* JavaScript/TypeScript avec Angular, GraphQL pour les APIs.
-- *Mobile :* Dart avec Flutter, avec une expérience passée sur le natif (Swift/Kotlin).
+- *#g("backend") :* #g("nodejs"), Python.
+- *#g("frontend") :* JavaScript/#g("typescript") avec #g("angular"), #g("graphql") pour les #g("api", mode: "pl").
+- *Mobile :* Dart avec #g("flutter"), avec une expérience passée sur le natif (Swift/Kotlin).
 
 ==== Infrastructure et déploiement
 
-L'infrastructure est hébergée sur le cloud français OVHcloud pour garantir la conformité RGPD. L'architecture distribuée s'appuie sur la conteneurisation avec *Docker*, probablement orchestrée par *Kubernetes*. Les bases de données suivent une approche multi-modèle, combinant probablement des bases de données relationnelles (SQL), NoSQL (pour les séries temporelles des capteurs) et un cache en mémoire comme *Redis* pour les données temps réel.
+L'infrastructure est hébergée sur le #g("cloud") français OVHcloud pour garantir la conformité #g("rgpd"). L'architecture distribuée s'appuie sur la conteneurisation avec #g("docker"), probablement orchestrée par #g("kubernetes"). Les bases de données suivent une approche multi-modèle, combinant probablement des bases de données relationnelles (#g("sql")), #g("nosql") (pour les séries temporelles des capteurs) et un cache en mémoire comme #g("redis") pour les données temps réel.
 
 ==== Outils de productivité
 
@@ -91,12 +150,12 @@ Conformément à la culture d'autonomie, les développeurs ont la liberté de ch
 
 ==== Sécurité et accès aux ressources
 
-La sécurité est une priorité absolue. La plateforme est entièrement conforme au *Règlement Général sur la Protection des Données (RGPD)*, avec des mesures strictes d'anonymisation des données, de limitation de la durée de conservation et de chiffrement (SSL/TLS).
-En complément de cette conformité, l'entreprise est actuellement en démarche pour obtenir la certification *ISO/IEC 27001*, la norme internationale de référence pour les systèmes de management de la sécurité de l'information, afin de formaliser et d'attester de la robustesse de ses processus.
+La sécurité est une priorité absolue. La plateforme est entièrement conforme au #g("rgpd", mode: "long"), avec des mesures strictes d'anonymisation des données, de limitation de la durée de conservation et de chiffrement (#g("ssl")).
+En complément de cette conformité, l'entreprise est actuellement en démarche pour obtenir la certification #g("iso27001"), la norme internationale de référence pour les systèmes de management de la sécurité de l'information, afin de formaliser et d'attester de la robustesse de ses processus.
 
 ==== Observabilité et monitoring
 
-Le suivi de la plateforme en production est assuré par plusieurs outils. *Sentry* est utilisé pour le tracking d'erreurs en temps réel. Une solution d'APM (Application Performance Monitoring) et un système de logging centralisé sont également en place pour superviser la performance des microservices et faciliter le débogage.
+Le suivi de la plateforme en production est assuré par plusieurs outils. #g("sentry") est utilisé pour le tracking d'erreurs en temps réel. Une solution d'#g("apm", mode: "long") et un système de logging centralisé sont également en place pour superviser la performance des #g("microservices") et faciliter le débogage.
 
 ==== Outils collaboratifs
 
@@ -104,39 +163,39 @@ La collaboration est facilitée par la structure plate de l'entreprise et l'util
 
 ==== Gestion des déploiements
 
-Les déploiements sont automatisés via un pipeline de CI/CD (Intégration Continue / Déploiement Continu). Cette approche permet de livrer de nouvelles fonctionnalités de manière rapide et fiable, en s'assurant que chaque changement passe par une série de tests automatisés avant d'être mis en production. La stratégie de déploiement par phases, utilisée lors de la migration vers Flutter, illustre la maturité de ces processus.
+Les déploiements sont automatisés via un pipeline de #g("cicd", mode: "both"). Cette approche permet de livrer de nouvelles fonctionnalités de manière rapide et fiable, en s'assurant que chaque changement passe par une série de tests automatisés avant d'être mis en production. La stratégie de déploiement par phases, utilisée lors de la migration vers #g("flutter"), illustre la maturité de ces processus.
 
-=== Organisation du travail en mode agile
+=== Organisation du travail en mode #g("agile")
 
 ==== Méthodologie de développement
 
-Affluences a adopté une approche de développement agile rythmée par des sprints d'une semaine. Bien qu'un framework spécifique comme Scrum ne soit pas formellement appliqué dans toute sa rigueur, l'organisation du travail s'articule autour de cycles de développement itératifs et de rituels hebdomadaires bien établis.
+Affluences a adopté une approche de développement #g("agile") rythmée par des #g("sprint", mode: "pl") d'une semaine. Bien qu'un framework spécifique comme #g("scrum") ne soit pas formellement appliqué dans toute sa rigueur, l'organisation du travail s'articule autour de cycles de développement itératifs et de rituels hebdomadaires bien établis.
 
 Parmi ces rituels, on retrouve :
 - Le `suivi-services`, qui se tient chaque lundi à 10h30. Cette réunion permet à chaque membre de l'équipe de partager ses avancées et les points de blocage éventuels.
-- La `weekly tech`, qui a lieu le vendredi à 10h30. Ce point synchronise l'ensemble des équipes techniques (backend, frontend, mobile, data) et assure que chacun est informé des progrès et des défis des autres pôles.
+- La `weekly tech`, qui a lieu le vendredi à 10h30. Ce point synchronise l'ensemble des équipes techniques (#g("backend"), #g("frontend"), mobile, data) et assure que chacun est informé des progrès et des défis des autres pôles.
 
 Cette organisation, combinée à des équipes cross-fonctionnelles, permet de livrer de la valeur en continu tout en maintenant une forte cohésion et une bonne circulation de l'information au sein du département technique.
 
-==== Pipeline CI/CD
+==== Pipeline #g("cicd")
 
-Le pipeline de CI/CD est au cœur de la méthodologie de développement. Il automatise la compilation, les tests et le déploiement du code, garantissant ainsi une haute qualité et une grande vélocité.
+Le pipeline de #g("cicd") est au cœur de la méthodologie de développement. Il automatise la compilation, les tests et le déploiement du code, garantissant ainsi une haute qualité et une grande vélocité.
 
 ==== Versionnage sémantique
 
-L'équipe de développement suit les conventions du versionnage sémantique (SemVer) pour gérer les versions de ses applications et services. Cela permet de communiquer clairement l'impact des changements (corrections de bugs, nouvelles fonctionnalités, changements cassants) aux autres équipes et aux utilisateurs de l'API.
+L'équipe de développement suit les conventions du #g("semver", mode: "long") pour gérer les versions de ses applications et services. Cela permet de communiquer clairement l'impact des changements (corrections de bugs, nouvelles fonctionnalités, changements cassants) aux autres équipes et aux utilisateurs de l'#g("api").
 
 ==== Architecture orientée services
 
-L'architecture microservices permet de découpler les différentes parties de la plateforme. Chaque service est responsable d'une fonctionnalité métier spécifique et peut être développé, déployé et mis à l'échelle indépendamment des autres. *RabbitMQ* joue un rôle crucial en permettant à ces services de communiquer de manière asynchrone et fiable.
+L'architecture #g("microservices") permet de découpler les différentes parties de la plateforme. Chaque service est responsable d'une fonctionnalité métier spécifique et peut être développé, déployé et mis à l'échelle indépendamment des autres. #g("rabbitmq") joue un rôle crucial en permettant à ces services de communiquer de manière asynchrone et fiable.
 
 ==== Standards de qualité
 
-La qualité est assurée par une combinaison de revues de code systématiques, de tests automatisés (unitaires, intégration) intégrés au pipeline de CI/CD, et d'un monitoring proactif en production. La robustesse de l'architecture est conçue pour supporter une charge élevée tout en garantissant une haute disponibilité.
+La qualité est assurée par une combinaison de revues de code systématiques, de tests automatisés (unitaires, intégration) intégrés au pipeline de #g("cicd"), et d'un monitoring proactif en production. La robustesse de l'architecture est conçue pour supporter une charge élevée tout en garantissant une haute disponibilité.
 
-==== Sécurité Docker
+==== Sécurité #g("docker")
 
-L'utilisation de Docker suit les meilleures pratiques de sécurité, notamment l'utilisation d'images de base minimalistes et vérifiées, la gestion des secrets en dehors des images, et potentiellement l'analyse des images pour détecter des vulnérabilités connues.
+L'utilisation de #g("docker") suit les meilleures pratiques de sécurité, notamment l'utilisation d'images de base minimalistes et vérifiées, la gestion des secrets en dehors des images, et potentiellement l'analyse des images pour détecter des vulnérabilités connues.
 
 ==== Onboarding et documentation
 
@@ -148,7 +207,7 @@ La communication est fluide et directe grâce à la hiérarchie aplatie. Les éq
 
 == Conclusion partielle
 
-L'environnement de travail chez Affluences est celui d'une `scale-up` technologique mature, qui a su conserver l'agilité et l'esprit d'initiative d'une startup tout en mettant en place des processus robustes pour garantir la qualité, la sécurité et la scalabilité de sa plateforme. La culture d'entreprise, axée sur l'autonomie, la transparence et l'intéressement collectif, constitue un atout majeur pour attirer et retenir les talents.
+L'environnement de travail chez Affluences est celui d'une #g("scaleup") technologique mature, qui a su conserver l'agilité et l'esprit d'initiative d'une startup tout en mettant en place des processus robustes pour garantir la qualité, la sécurité et la scalabilité de sa plateforme. La culture d'entreprise, axée sur l'autonomie, la transparence et l'intéressement collectif, constitue un atout majeur pour attirer et retenir les talents.
 
 = Missions
 
@@ -156,7 +215,7 @@ L'environnement de travail chez Affluences est celui d'une `scale-up` technologi
 
 === Contexte et problématique
 
-La requête GraphQL `getAttendanceStatsForAPeriod` présentait des problèmes de performance critiques pour les plages de dates supérieures à un mois. Les requêtes prenaient plus de 90 secondes pour des périodes de 30 jours et crashaient complètement pour des requêtes sur une année entière.
+La requête #g("graphql") `getAttendanceStatsForAPeriod` présentait des problèmes de performance critiques pour les plages de dates supérieures à un mois. Les requêtes prenaient plus de 90 secondes pour des périodes de 30 jours et crashaient complètement pour des requêtes sur une année entière.
 
 #my-block(
     content-align: left,
@@ -171,7 +230,7 @@ La requête GraphQL `getAttendanceStatsForAPeriod` présentait des problèmes de
 
 === Analyse technique de la cause racine
 
-Le problème résidait dans l'architecture des requêtes du `AttendanceStatsRepository`, qui filtraient les données par `site_id` en utilisant l'extraction JSON :
+Le problème résidait dans l'architecture des requêtes du `AttendanceStatsRepository`, qui filtraient les données par `site_id` en utilisant l'extraction #g("json") :
 
 #code(
     ```sql
@@ -184,7 +243,7 @@ Le problème résidait dans l'architecture des requêtes du `AttendanceStatsRepo
 #definition(title: "Limitations de l'approche initiale")[
   - Impossibilité d'utiliser l'index de clé primaire `(measuring_set_id, record_datetime_utc)`
   - Nécessité d'un parcours complet de la table (*full table scan*)
-  - Parsing JSON pour chaque ligne de la table
+  - Parsing #g("json") pour chaque ligne de la table
   - Performance dégradant de manière exponentielle avec la taille de la période
 ]
 
@@ -198,24 +257,24 @@ L'optimisation a consisté à inverser la stratégie de requêtage pour exploite
     width: 100%,
 )[
   *Approche initiale (lente)* : \
-  `site_id → [Scan complet + parsing JSON] → Résultats`
+  `site_id -> [Scan complet + parsing JSON] -> Resultats`
 
   *Nouvelle approche (optimisée)* : \
-  `site_id → [Appel API] → measuring_set_ids → [Requête indexée] → Résultats`
+  `site_id -> [Appel API] -> measuring_set_ids -> [Requete indexee] -> Resultats`
 ]
 
-Au lieu de requêter directement par `site_id` (stocké dans un champ JSON), la solution procède en deux étapes :
+Au lieu de requêter directement par `site_id` (stocké dans un champ #g("json")), la solution procède en deux étapes :
 
 1. *Récupération des measuring set IDs* via le `SensorsInternalHttpRepository`
-2. *Requête par `measuring_set_id`* (colonne indexée) au lieu de `site_id` (champ JSON)
+2. *Requête par `measuring_set_id`* (colonne indexée) au lieu de `site_id` (champ #g("json"))
 
-Cette approche ajoute un appel API léger (~10-20ms) mais transforme la requête base de données de O(n) en O(log n).
+Cette approche ajoute un appel #g("api") léger (~10-20ms) mais transforme la requête base de données de O(n) en O(log n).
 
 === Modifications techniques implémentées
 
 ==== Refactoring du contrôleur
 
-Le `AttendanceStatsController` a été rendu injectable avec injection de dépendances :
+Le `AttendanceStatsController` a été rendu injectable avec #g("di", mode: "long") :
 
 #code(
     lang: "typescript",
@@ -268,7 +327,7 @@ Les requêtes SQL ont été optimisées pour exploiter l'index :
 
 ==== Injection de dépendances
 
-Le pattern d'injection de dépendances a été correctement implémenté dans le conteneur IoC :
+Le pattern d'#g("di") a été correctement implémenté dans le conteneur #g("ioc") :
 
 #code(
     ```typescript
@@ -318,9 +377,9 @@ L'index de clé primaire `(measuring_set_id, record_datetime_utc)` est désormai
 
 ==== Trade-off et analyse coût-bénéfice
 
-- *Coût ajouté* : 1 appel API pour récupérer les measuring set IDs (~10-20 ms)
-- *Coût économisé* : Élimination du scan complet avec parsing JSON (90+ secondes)
-- *Gain net* : Amélioration de performance de ×2 250
+- *Coût ajouté* : 1 appel #g("api") pour récupérer les measuring set IDs (~10-20 ms)
+- *Coût économisé* : Élimination du scan complet avec parsing #g("json") (90+ secondes)
+- *Gain net* : Amélioration de performance de x2 250
 
 === Impact en production
 
@@ -346,9 +405,9 @@ La solution réutilise l'infrastructure existante (`SensorsInternalHttpRepositor
     title: "Leçons clés"
 )[
   1. *Conscience des index* : Toujours concevoir les requêtes autour des index disponibles
-  2. *Prudence avec les colonnes JSON* : Le filtrage sur des champs JSON empêche l'utilisation d'index
+  2. *Prudence avec les colonnes #g("json")* : Le filtrage sur des champs #g("json") empêche l'utilisation d'index
   3. *Requêtes en deux étapes* : Ajouter une étape de lookup légère peut être plus rapide qu'une requête unique non optimisée
-  4. *Mesurer systématiquement* : L'amélioration de ×2 250 a été validée par des mesures en production réelle
+  4. *Mesurer systématiquement* : L'amélioration de x2 250 a été validée par des mesures en production réelle
   5. *Suivre les patterns existants* : La solution réutilise l'architecture établie du projet
 ]
 
@@ -358,16 +417,60 @@ La solution réutilise l'infrastructure existante (`SensorsInternalHttpRepositor
 )[
   - *Index composites* : Compréhension du fonctionnement de `(measuring_set_id, record_datetime_utc)`
   - *TypeORM array binding* : Syntaxe `:...array` pour les clauses `IN`
-  - *Opérateurs JSON MySQL* : Utilisation de `->` au lieu de `JSON_EXTRACT()`
-  - *Injection de dépendances* : Patterns IoC pour améliorer testabilité et maintenabilité
+  - *Opérateurs #g("json") MySQL* : Utilisation de `->` au lieu de `JSON_EXTRACT()`
+  - *#g("di")* : Patterns #g("ioc") pour améliorer testabilité et maintenabilité
 ]
 
 #example(title: "Fichiers modifiés")[
-  - `app/controllers/attendance-stats/AttendanceStatsController.ts` — Ajout DI et résolution measuring sets
+  - `app/controllers/attendance-stats/AttendanceStatsController.ts` — Ajout #g("di") et résolution measuring sets
   - `app/repositories/AttendanceStatsRepository.ts` — Optimisation requêtes avec colonnes indexées
   - `app/resolvers/AttendanceStatsResolver.ts` — Injection contrôleur au lieu d'appels statiques
-  - `app/app.module.ts` — Enregistrement du contrôleur dans le conteneur IoC
+  - `app/app.module.ts` — Enregistrement du contrôleur dans le conteneur #g("ioc")
 ]
 
 *Date de réalisation* : Octobre 2025 \
-*Statut* : ✅ Déployé en production et validé avec du trafic réel
+*Statut* : [OK] Deploye en production et valide avec du trafic reel
+
+#pagebreak()
+
+= Glossaire <glossaire>
+
+Ce glossaire regroupe les termes techniques utilises dans ce document, classes par categorie pour faciliter la comprehension.
+
+#{
+  // Affichage personnalisé du glossaire par groupe
+  let groups = ("Developpement", "Infrastructure", "Donnees", "Methodologie", "Securite", "Entreprise")
+
+  for group in groups {
+    // Filtrer les termes de ce groupe
+    let terms = my-glossary.pairs().filter(pair => {
+      let entry = pair.at(1)
+      entry.at("group", default: "") == group
+    })
+
+    if terms.len() > 0 {
+      [=== #group]
+
+      table(
+        columns: (30%, 1fr),
+        inset: 6pt,
+        stroke: 0.5pt + luma(180),
+        align: (left, left),
+        table.header([*Terme*], [*Definition*]),
+        ..terms.map(pair => {
+          let key = pair.at(0)
+          let entry = pair.at(1)
+          // Créer le label pour ce terme (gloss-key)
+          let term-label = label("gloss-" + key)
+          let term-display = if entry.at("long", default: none) != none and entry.long != entry.short {
+            [*#entry.short* -- #entry.long #term-label]
+          } else {
+            [*#entry.short* #term-label]
+          }
+          (term-display, entry.at("description", default: []))
+        }).flatten()
+      )
+      v(1em)
+    }
+  }
+}
