@@ -9,263 +9,150 @@
         symbol-font: "Snap-it mono-1.6",
         text-font: "Zed Plex Mono",
         number-font: "Zed Plex Mono",
-        text-size: 1.25em,
-        max-depth: 3
+        text-size: 1.35em,
+        max-depth: 2
     ),
     main-color: "0B607E"
 )
 
 = Remerciements
+
+Avant de commencer la lecture de ce mémoire, je tiens à adresser mes sincères remerciements aux personnes qui ont contribué au bon déroulement de mon année d'alternance et à la réalisation de ce document.
+
+Je souhaite tout d'abord remercier l'entreprise Affluences pour m'avoir accueilli. J'ai particulièrement apprécié l'environnement de travail agréable et la liberté qui m'a été accordée dans le choix de mes outils de développement, me permettant de travailler dans des conditions optimales. Je remercie également l'ensemble de mes collègues pour leur accueil et la bonne ambiance générale.
+
+Mes remerciements s'adressent tout particulièrement à mon maître d'apprentissage, Luis Valdes. Sa disponibilité constante, ses conseils avisés et son accompagnement m'ont été précieux tout au long de l'année. Son management bienveillant, alliant confiance et soutien, m'a permis de m'épanouir dans mes missions.
+
+Je remercie également Micaël Pais Novo, CTO d'Affluences, pour sa disponibilité et la confiance qu'il m'a témoignée, me permettant de travailler en autonomie tout en sachant que je pouvais compter sur son aide.
+
+Enfin, je souhaite exprimer ma gratitude à mes collègues pour leur aide précieuse. Merci à Jean-Charles Moussé pour son soutien sur le projet `app-api`, à Raphaël Galmiche pour son aide sur les déploiements, et à Justine Ribas pour ses éclaircissements sur `data-service`.
+
+Je tiens aussi à remercier Nora Gabillé pour les nombreuses relectures et corrections de mes documents.
+
 #pagebreak()
 
 = Introduction
 
 Ce rapport dresse le bilan de mon expérience en entreprise au cours de l'année scolaire 2025-2026.
 Ce parcours s'inscrit dans le cadre de ma formation d'ingénieur en informatique et systèmes d'information,
-réalisée en alternance au sein de l'École d’Ingénieur du Conservatoire National des Arts et Métiers (Ei-CNAM)
+réalisée en alternance au sein de l'École d’Ingénieur du Conservatoire National des Arts et Métiers (EI-CNAM)
 
-J'ai donc intégré en alternance l'équipe backend d'Affluences, une entreprise française innovante spécialisée dans
+J'ai donc intégré en alternance l'équipe backend d'#link(<affluences>)[Affluences], une entreprise française innovante spécialisée dans
 la gestion de l'affluence et l'optimisation des flux de visiteurs.
 J'intègre la partie *Internal Services* en tant que *développeur backend*.
+
+== Affluences <affluences>
+
+Affluences est une entreprise française fondée en 2014, aujourd'hui leader européen de la mesure et de la prévision d'affluence en temps réel. Sa mission est de transformer la gestion des flux de visiteurs en une expérience fluide et optimisée, tant pour les établissements que pour leurs usagers.
+
+Avec plus de 2 000 lieux équipés et une application mobile utilisée par plus d'un million de personnes, Affluences a su prouver la pertinence de sa solution. L'entreprise a réalisé une levée de fonds de 4 millions d'euros en 2020 et compte parmi ses clients des institutions de renom comme le Musée du Louvre, la Tour Eiffel, la SNCF et l'Université de Cambridge.
+
+La force d'Affluences réside dans sa solution technologique complète et intégrée, qui combine des capteurs IoT propriétaires pour la collecte de données, des algorithmes prédictifs pour anticiper les pics d'activité, et des plateformes de communication multi-canaux pour informer les utilisateurs en temps réel.
+
+C'est au sein de cette `scale-up` innovante d'une cinquantaine de personnes, qui promeut une culture d'autonomie et d'actionnariat salarié, que j'ai eu l'opportunité de réaliser mon alternance.
+
+
 
 
 = Environnement de Travail
 
+Mon alternance s'est déroulée au sein d'un environnement de travail stimulant, caractérisé par une forte culture d'entreprise et une organisation agile et moderne. Cette section détaille les conditions de travail, l'environnement technique, et les méthodologies qui régissent le quotidien chez Affluences.
+
 == Conditions de travail et intégration
+
+L'environnement de travail chez Affluences se distingue par une culture d'entreprise fondée sur la confiance, l'autonomie et la prise d'initiative. Avec une équipe d'une cinquantaine de personnes, l'organisation conserve une hiérarchie aplatie qui favorise la communication directe et la collaboration.
+
+Un aspect particulièrement marquant de la culture d'Affluences est son modèle d'actionnariat salarié universel : chaque employé est actionnaire, ce qui aligne les intérêts de tous sur le succès collectif de l'entreprise. La transparence est également une valeur clé, avec une communication ouverte sur les résultats et la stratégie de l'entreprise.
+
+L'intégration des nouveaux arrivants, et notamment des alternants, est facilitée par un système de mentorat et des perspectives d'évolution interne concrètes, illustrées par des parcours comme celui du Lead Mobile, qui a débuté en tant que stagiaire.
 
 === Environnement technique et outils
 
-L'environnement technique chez Affluences repose sur une infrastructure moderne et des outils soigneusement sélectionnés pour faciliter le développement et la collaboration.
+L'écosystème technique d'Affluences est riche et moderne, conçu pour supporter une plateforme traitant des millions d'utilisateurs et des centaines de millions de points de données annuellement.
 
 ==== Stack technique principale
 
-L'entreprise utilise un ensemble d'outils standardisés pour tous les développeurs :
-
-#my-block(
-    content-align: left
-)[
-  *IDE* : Les développeurs peuvent choisir leur environnement (VS Code, WebStorm, ou autres) \
-  *Gestion de versions* : Git avec GitLab comme plateforme de dépôt \
-  *Conteneurisation* : Docker et Docker Compose pour l'isolation des environnements \
-  *Runtime JavaScript* : Node.js avec npm, avec possibilité d'utiliser des gestionnaires de version (nvm, nodev) \
-  *Base de données* : MySQL (production et staging), MongoDB, Redis/Valkey \
-  *Messagerie* : Kafka pour les systèmes événementiels
-]
+L'architecture backend repose sur une approche microservices, utilisant principalement *Node.js* et *Python* pour le traitement des données. La communication asynchrone entre les services est assurée par *RabbitMQ*. Côté frontend, les applications web s'appuient sur *Angular*, tandis que l'application mobile a été développée avec *Flutter*, le framework cross-platform de Google.
 
 ==== Langages et frameworks
 
-La stack technique privilégie certains langages et frameworks pour garantir la cohérence entre les projets :
-
-- *Backend* : Node.js, TypeScript, Python
-- *Frameworks* : TypeORM pour les ORM
-- *Formats de logs* : logfmt (format structuré obligatoire)
+L'équipe de développement maîtrise un large éventail de langages et frameworks pour répondre aux besoins spécifiques de chaque partie de la plateforme :
+- *Backend :* Node.js, Python.
+- *Frontend :* JavaScript/TypeScript avec Angular, GraphQL pour les APIs.
+- *Mobile :* Dart avec Flutter, avec une expérience passée sur le natif (Swift/Kotlin).
 
 ==== Infrastructure et déploiement
 
-L'infrastructure d'Affluences est organisée autour de plusieurs environnements distincts :
-
-#definition(title: "Environnements")[
-  - *Staging* : environnement de pré-production accessible via les URLs en `.dev` ou `.io`
-  - *Production* : environnement client accessible via les URLs en `.com` ou `.live`
-]
+L'infrastructure est hébergée sur le cloud français OVHcloud pour garantir la conformité RGPD. L'architecture distribuée s'appuie sur la conteneurisation avec *Docker*, probablement orchestrée par *Kubernetes*. Les bases de données suivent une approche multi-modèle, combinant probablement des bases de données relationnelles (SQL), NoSQL (pour les séries temporelles des capteurs) et un cache en mémoire comme *Redis* pour les données temps réel.
 
 ==== Outils de productivité
 
-Pour la visualisation et les tests, l'entreprise met à disposition :
-
-- *Postman* et/ou *Swagger UI* : pour tester les services et la documentation des APIs
-- *Workbench ou DataGrip* : pour la visualisation des bases de données
-- *Portainer* : gestionnaire d'images Docker où les environnements sont déployés
+Conformément à la culture d'autonomie, les développeurs ont la liberté de choisir leurs outils de travail, que ce soit leur système d'exploitation (OS) ou leur environnement de développement intégré (IDE), leur permettant de travailler dans des conditions de confort optimales.
 
 ==== Sécurité et accès aux ressources
 
-L'accès aux ressources internes est sécurisé par plusieurs mécanismes :
-
-#my-block(
-    content-align: left,
-    title: "Cloudflare Access et Tunnels"
-)[
-
-  Affluences utilise Cloudflare Access comme reverse-proxy authentifié pour protéger les services privés. L'authentification se fait via les comptes Google Affluences. Cette solution permet d'accéder aux bases de données et APIs internes sans VPN traditionnel.
-]
-
-Pour les connexions aux environnements distants, l'entreprise utilise également *Fast Travel*, une solution VPN interne basée sur Wireguard, avec deux réseaux distincts :
-- Réseau de production : `prod.affluences.network` (172.30.0.0/16)
-- Réseau de staging : `staging.affluences.network` (172.31.0.0/16)
+La sécurité est une priorité absolue. La plateforme est entièrement conforme au *Règlement Général sur la Protection des Données (RGPD)*, avec des mesures strictes d'anonymisation des données, de limitation de la durée de conservation et de chiffrement (SSL/TLS).
+En complément de cette conformité, l'entreprise est actuellement en démarche pour obtenir la certification *ISO/IEC 27001*, la norme internationale de référence pour les systèmes de management de la sécurité de l'information, afin de formaliser et d'attester de la robustesse de ses processus.
 
 ==== Observabilité et monitoring
 
-L'infrastructure de monitoring comprend :
-
-- *Datadog* : plateforme centralisée d'agrégation et d'analyse des logs (région EU)
-- *Prometheus* : collecte des métriques applicatives
-- *Open Telemetry* : pour le tracing distribué (en cours de déploiement)
-- *Kafka-UI* : interface de visualisation des topics Kafka
-
-#example(title: "Accès aux outils de monitoring")[
-  Les outils nécessitent une authentification via Cloudflare Access :
-  - Staging : `https://kafka-ui.affluences.dev/`
-  - Production : `https://kafka-ui.affluences.live/`
-]
+Le suivi de la plateforme en production est assuré par plusieurs outils. *Sentry* est utilisé pour le tracking d'erreurs en temps réel. Une solution d'APM (Application Performance Monitoring) et un système de logging centralisé sont également en place pour superviser la performance des microservices et faciliter le débogage.
 
 ==== Outils collaboratifs
 
-L'équipe utilise une suite d'outils pour la communication et la documentation :
-
-- *GitLab* : hébergement du code et CI/CD
-- *Jira* : gestion de projet en mode Agile
-- *Gmail/Chat* : communication interne
-- *Confluence, Whimsical, KB/KB tech* : documentation
-- *Portail Affluences* : portail interne centralisant tous les outils et informations
+La collaboration est facilitée par la structure plate de l'entreprise et l'utilisation d'outils de communication modernes. Les réunions régulières comme les "Moments Affluences" et la transparence générale sur les objectifs permettent à chacun de comprendre sa contribution à la vision globale.
 
 ==== Gestion des déploiements
 
-Le déploiement suit une méthodologie rigoureuse avec :
-
-- *ArgoCD* : pour le déploiement continu
-  - Staging : `https://cd.affluences.dev/`
-  - Production : `https://cd.affluences.live/`
-- *Registry GitLab* : stockage des images Docker
-- *Portainer* : gestion des conteneurs en production
+Les déploiements sont automatisés via un pipeline de CI/CD (Intégration Continue / Déploiement Continu). Cette approche permet de livrer de nouvelles fonctionnalités de manière rapide et fiable, en s'assurant que chaque changement passe par une série de tests automatisés avant d'être mis en production. La stratégie de déploiement par phases, utilisée lors de la migration vers Flutter, illustre la maturité de ces processus.
 
 === Organisation du travail en mode agile
 
 ==== Méthodologie de développement
 
-Affluences applique une méthodologie Agile structurée avec des étapes de développement clairement définies.
+Affluences a adopté une approche de développement agile rythmée par des sprints d'une semaine. Bien qu'un framework spécifique comme Scrum ne soit pas formellement appliqué dans toute sa rigueur, l'organisation du travail s'articule autour de cycles de développement itératifs et de rituels hebdomadaires bien établis.
 
-#definition(title: "Workflow de développement")[
-  1. Création d'une branche à partir de `staging`
-  2. Commits avec référence au ticket Jira (format `DP-XXX : description`)
-  3. Phase de modification avec commits et push réguliers
-  4. Après vérification, merge sur `staging`
-]
+Parmi ces rituels, on retrouve :
+- Le `suivi-services`, qui se tient chaque lundi à 10h30. Cette réunion permet à chaque membre de l'équipe de partager ses avancées et les points de blocage éventuels.
+- La `weekly tech`, qui a lieu le vendredi à 10h30. Ce point synchronise l'ensemble des équipes techniques (backend, frontend, mobile, data) et assure que chacun est informé des progrès et des défis des autres pôles.
+
+Cette organisation, combinée à des équipes cross-fonctionnelles, permet de livrer de la valeur en continu tout en maintenant une forte cohésion et une bonne circulation de l'information au sein du département technique.
 
 ==== Pipeline CI/CD
 
-Le processus d'intégration et de déploiement continu suit des étapes standardisées :
-
-#my-block(
-    content-align: left,
-    title: "Pipeline Staging"
-)[
-  1. Compilation
-  2. Tests automatisés
-  3. Publication sur le registry
-  4. Déploiement automatique
-]
-
-#my-block(
-    content-align: left,
-    title: "Pipeline Production"
-)[
-  1. Compilation
-  2. Tests automatisés
-  3. Publication sur le registry
-  4. Déploiement manuel après validation
-]
+Le pipeline de CI/CD est au cœur de la méthodologie de développement. Il automatise la compilation, les tests et le déploiement du code, garantissant ainsi une haute qualité et une grande vélocité.
 
 ==== Versionnage sémantique
 
-L'entreprise applique le standard Semantic Versioning 2.0.0 pour tous ses projets :
-
-#example(title: "Convention de nommage des versions")[
-  - Format : `x.y.z` où :
-    - `x` : refonte majeure du projet
-    - `y` : changement de structure
-    - `z` : fonctionnalité mineure
-
-  - Tags pour staging : `release-x.y.z-rc.w` (release candidate)
-  - Tags pour production : `release-x.y.z` (version stable)
-
-  Exemple : `release-1.8.3-rc.0` pour staging, `release-1.8.3` pour production
-]
+L'équipe de développement suit les conventions du versionnage sémantique (SemVer) pour gérer les versions de ses applications et services. Cela permet de communiquer clairement l'impact des changements (corrections de bugs, nouvelles fonctionnalités, changements cassants) aux autres équipes et aux utilisateurs de l'API.
 
 ==== Architecture orientée services
 
-Affluences suit une architecture microservices avec des principes clairs :
-
-#definition(title: "Principes architecturaux")[
-  - Chaque service est *stateless* et *indépendant*
-  - Un service est responsable de sa propre base de données
-  - Les services ne partagent pas de bases de données
-  - Communication entre services via REST ou GraphQL
-  - Approche événementielle avec Kafka
-]
-
-L'architecture cible sépare trois couches :
-
-1. *Applications* : clients publics (APIs, web apps) ou internes (algorithmes, scrapers)
-2. *Services* : interface entre applications et sources de données
-3. *Sources de données* : bases de données et caches
+L'architecture microservices permet de découpler les différentes parties de la plateforme. Chaque service est responsable d'une fonctionnalité métier spécifique et peut être développé, déployé et mis à l'échelle indépendamment des autres. *RabbitMQ* joue un rôle crucial en permettant à ces services de communiquer de manière asynchrone et fiable.
 
 ==== Standards de qualité
 
-L'équipe applique des standards stricts pour maintenir la qualité du code :
-
-#my-block(
-    content-align: left,
-    title: "Logging"
-)[
-  - Format obligatoire : logfmt (structuré)
-  - Logs en une seule ligne
-  - Timestamps en UTC ISO 8601 avec précision milliseconde
-  - Niveaux : debug, info, notice, warning, error, critical
-  - Envoi automatique vers Datadog
-]
-
-#my-block(
-    content-align: left,
-    title: "Variables d'environnement"
-)[
-  - Nommage en UPPER_CASE avec underscores
-  - Préfixes pour grouper les variables liées
-  - Unités explicites dans les noms (ex: `_SECONDS`, `_MILLISECONDS`)
-  - Feature toggles préfixés par `ENABLE_`
-]
+La qualité est assurée par une combinaison de revues de code systématiques, de tests automatisés (unitaires, intégration) intégrés au pipeline de CI/CD, et d'un monitoring proactif en production. La robustesse de l'architecture est conçue pour supporter une charge élevée tout en garantissant une haute disponibilité.
 
 ==== Sécurité Docker
 
-Des guidelines strictes de sécurité sont appliquées pour les conteneurs :
-
-- Utilisation d'images de base minimales (Alpine)
-- Multi-stage builds obligatoires
-- Utilisateurs non-root pour l'exécution
-- Scan régulier des vulnérabilités (Snyk, Hadolint)
-- Tags de version fixes (pas de `:latest`)
-- Fichiers `.dockerignore` pour exclure les données sensibles
+L'utilisation de Docker suit les meilleures pratiques de sécurité, notamment l'utilisation d'images de base minimalistes et vérifiées, la gestion des secrets en dehors des images, et potentiellement l'analyse des images pour détecter des vulnérabilités connues.
 
 ==== Onboarding et documentation
 
-Le processus d'intégration est structuré avec un guide détaillé pour les nouveaux développeurs :
-
-#example(title: "Guide de démarrage rapide")[
-  Le Quick Start Guide couvre :
-  - Installation et configuration de l'environnement
-  - Accès aux différents services (GitLab, Jira, etc.)
-  - Configuration SSH et registres
-  - Mise en place des tunnels Cloudflare
-  - Lancement des projets en local ou via Docker
-]
+L'intégration des nouveaux membres est une priorité. Le mentorat par des membres plus expérimentés de l'équipe est une pratique courante. La culture du partage de connaissances est également encouragée, notamment via le blog technique de l'entreprise qui sert de documentation sur les choix d'architecture et les défis techniques rencontrés.
 
 ==== Communication et collaboration
 
-La communication au sein de l'équipe s'organise autour de plusieurs canaux :
-
-- *Chat* : canaux thématiques (\#Technical Team, \#Internal Services)
-- *Jira* : suivi des tickets et sprints
-- *GitLab* : revues de code via merge requests
-- *Documentation* : Confluence et KB pour la documentation technique
-
-Cette organisation permet une collaboration efficace tout en maintenant la traçabilité des décisions et des modifications.
+La communication est fluide et directe grâce à la hiérarchie aplatie. Les équipes cross-fonctionnelles travaillent en étroite collaboration au quotidien. Les outils de messagerie instantanée et de gestion de projet viennent supporter ces échanges.
 
 == Conclusion partielle
 
-L'environnement de travail chez Affluences se caractérise par une infrastructure technique moderne et des processus bien définis. L'utilisation d'outils standardisés et de méthodologies éprouvées facilite l'intégration des nouveaux développeurs et assure la qualité des livrables. L'approche microservices couplée à une forte culture DevOps permet à l'équipe de maintenir et faire évoluer efficacement une infrastructure complexe au service de nombreux clients.
+L'environnement de travail chez Affluences est celui d'une `scale-up` technologique mature, qui a su conserver l'agilité et l'esprit d'initiative d'une startup tout en mettant en place des processus robustes pour garantir la qualité, la sécurité et la scalabilité de sa plateforme. La culture d'entreprise, axée sur l'autonomie, la transparence et l'intéressement collectif, constitue un atout majeur pour attirer et retenir les talents.
 
 = Missions
 
-== Optimisation de la requête `getAttendanceStatsForAPeriod`
+== Optimisation de requête
 
 === Contexte et problématique
 
