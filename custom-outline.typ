@@ -5,6 +5,7 @@
   text-size: 1em,
   line-spacing: 0.4em,  // Line spacing to make box-drawing characters join properly
   max-depth: none,  // Maximum heading level to include (none = all levels)
+  use-dots: true,  // Use dots to separate text from page numbers (if false, uses spaces)
 ) = context {
   let headings = query(selector(heading))
 
@@ -171,10 +172,10 @@
         let padding = " " * (max-page-width - page-str.len())
         let padded-page = padding + page-str
 
-        // Build the line with clickable text, using 1fr box for dot leaders to right-align page numbers
+        // Build the line with clickable text, using 1fr box for dot leaders or spaces to right-align page numbers
         box(width: 100%)[
           #text(font: symbol-font)[#raw(line.prefix, block: false, lang: none)]#link(line.location)[#text(font: text-font)[#line.text]]
-          #box(width: 1fr, repeat[.])
+          #box(width: 1fr, if use-dots { repeat[.] } else { h(0pt) })
           #text(font: number-font)[#padded-page]
         ]
         linebreak()
