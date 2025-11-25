@@ -102,13 +102,15 @@ J'intègre la partie *Internal Services* en tant que *développeur #g("backend")
 
 == Affluences <affluences>
 
-Affluences est une entreprise française fondée en 2014, aujourd'hui leader européen de la mesure et de la prévision d'affluence en temps réel. Sa mission est de transformer la gestion des flux de visiteurs en une expérience fluide et optimisée, tant pour les établissements que pour leurs usagers.
+Affluences est une entreprise française fondée en 2014, aujourd'hui leader européen de la mesure et de la prévision d'affluence en temps réel. Avec plus de *10 ans d'expertise*, sa mission est de transformer la gestion des flux de visiteurs en une expérience fluide et optimisée, tant pour les établissements que pour leurs usagers.
 
-Avec plus de 2 000 lieux équipés et une application mobile utilisée par plus d'un million de personnes, Affluences a su prouver la pertinence de sa solution. L'entreprise a réalisé une levée de fonds de 4 millions d'euros en 2020 et compte parmi ses clients des institutions de renom comme le Musée du Louvre, la Tour Eiffel, la SNCF et l'Université de Cambridge.
+L'entreprise affiche des résultats impressionnants : *1 800 établissements clients* répartis à travers l'Europe, une application mobile notée *4,8/5* utilisée par plus d'*un million de personnes*, et *13 millions de consultations mensuelles*. Affluences a réalisé une levée de fonds de 4 millions d'euros en 2020 et compte parmi ses clients des institutions de renom comme le Musée du Louvre, la Tour Eiffel, la SNCF et l'Université de Cambridge.
 
-La force d'Affluences réside dans sa solution technologique complète et intégrée, qui combine des capteurs #g("iot") propriétaires pour la collecte de données, des algorithmes prédictifs pour anticiper les pics d'activité, et des plateformes de communication multi-canaux pour informer les utilisateurs en temps réel.
+La force d'Affluences réside dans sa solution technologique complète et intégrée, qui combine des capteurs #g("iot") propriétaires pour la collecte de données, des algorithmes prédictifs pour anticiper les pics d'activité, et des plateformes de communication multi-canaux pour informer les utilisateurs en temps réel. L'entreprise déploie ses solutions sur *huit secteurs verticaux* distincts : bibliothèques et médiathèques, musées et lieux culturels, universités et smart campus, collectivités et smart cities, transports publics, espaces naturels, entreprises et smart buildings, retail et événements.
 
-C'est au sein de cette #g("scaleup") innovante d'une cinquantaine de personnes, qui promeut une culture d'autonomie et d'actionnariat salarié, que j'ai eu l'opportunité de réaliser mon alternance.
+L'équipe technique d'une cinquantaine de collaborateurs est organisée en pôles spécialisés : *Data* (traitement des flux de données en temps réel), *Computer Vision* (algorithmes d'#g("iot", mode: "long") avec intelligence artificielle), *Infra* (infrastructure et sécurité), *Web* (interfaces utilisateur), et *Service* (#g("api", mode: "pl") et #g("microservices")). L'entreprise s'appuie sur un stack technologique moderne incluant #g("kafka") pour le streaming de données, #g("airflow") pour l'orchestration des workflows, #g("kubernetes") pour l'orchestration de conteneurs, et suit une méthodologie #g("agile") avec des sprints de 2 semaines.
+
+C'est au sein de cette #g("scaleup") innovante, qui promeut une culture d'autonomie et d'actionnariat salarié universel, que j'ai eu l'opportunité de réaliser mon alternance.
 
 
 

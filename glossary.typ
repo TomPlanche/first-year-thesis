@@ -92,6 +92,18 @@
     description: "Base de donnees en memoire tres rapide, souvent utilisee comme cache pour stocker temporairement des donnees frequemment consultees et accelerer les reponses.",
     group: "Infrastructure",
   ),
+  kafka: (
+    short: "Kafka",
+    long: "Apache Kafka",
+    description: "Plateforme de streaming distribuee qui permet de publier et s'abonner a des flux de donnees en temps reel. Utilisee pour construire des pipelines de donnees en temps reel et des applications de streaming.",
+    group: "Infrastructure",
+  ),
+  airflow: (
+    short: "Airflow",
+    long: "Apache Airflow",
+    description: "Plateforme open-source de gestion de flux de travail (workflow) qui permet de definir, planifier et surveiller des pipelines de donnees complexes. Automatise les taches de traitement de donnees.",
+    group: "Infrastructure",
+  ),
 
   // === Donnees et IoT ===
   iot: (
