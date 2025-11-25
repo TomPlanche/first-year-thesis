@@ -36,6 +36,11 @@
     description: "Environnement d'execution permettant d'utiliser JavaScript cote serveur (backend). Tres utilise pour creer des applications web rapides et scalables.",
     group: "Developpement",
   ),
+  nestjs: (
+    short: "NestJS",
+    description: "Framework backend moderne pour Node.js utilisant TypeScript. Il suit les principes d'architecture modulaire et d'injection de dependances, facilitant la creation d'applications serveur robustes et maintenables.",
+    group: "Developpement",
+  ),
   flutter: (
     short: "Flutter",
     description: "Framework de Google permettant de developper des applications mobiles pour iOS et Android avec un seul code source. Utilise le langage Dart.",
@@ -104,6 +109,11 @@
     description: "Plateforme open-source de gestion de flux de travail (workflow) qui permet de definir, planifier et surveiller des pipelines de donnees complexes. Automatise les taches de traitement de donnees.",
     group: "Infrastructure",
   ),
+  argoworkflow: (
+    short: "Argo Workflow",
+    description: "Outil d'orchestration de workflows natif pour Kubernetes. Permet d'executer des taches complexes et des processus batch dans des conteneurs, facilitant l'automatisation et la gestion des pipelines de traitement.",
+    group: "Infrastructure",
+  ),
 
   // === Donnees et IoT ===
   iot: (
@@ -159,6 +169,12 @@
     description: "Convention de numerotation des versions logicielles au format MAJEUR.MINEUR.CORRECTIF. Permet de comprendre rapidement l'impact d'une mise a jour.",
     group: "Methodologie",
   ),
+  monorepo: (
+    short: "Monorepo",
+    long: "Monolithic Repository",
+    description: "Architecture de gestion de code ou plusieurs projets ou services sont stockes dans un seul et meme depot. Facilite le partage de code, la gestion des dependances communes et la coordination des modifications entre projets.",
+    group: "Methodologie",
+  ),
 
   // === Securite et Qualite ===
   iso27001: (
@@ -182,6 +198,11 @@
     short: "APM",
     long: "Application Performance Monitoring",
     description: "Outils de surveillance des performances des applications qui permettent d'identifier les lenteurs, les goulots d'etranglement et d'optimiser les temps de reponse.",
+    group: "Securite",
+  ),
+  datadog: (
+    short: "Datadog",
+    description: "Plateforme de monitoring et d'observabilite cloud. Permet de surveiller les performances des applications, analyser les logs, detecter les anomalies et visualiser l'etat de l'infrastructure en temps reel.",
     group: "Securite",
   ),
 
