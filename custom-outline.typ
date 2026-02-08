@@ -6,7 +6,21 @@
   line-spacing: 0.4em,  // Line spacing to make box-drawing characters join properly
   max-depth: none,  // Maximum heading level to include (none = all levels)
   use-dots: true,  // Use dots to separate text from page numbers (if false, uses spaces)
+  color: black,  // Color for the entire outline - accepts hex strings ("#0B607E"), color names ("blue"), or color values
 ) = context {
+  // Convert color parameter to proper color type
+  let outline-color = if type(color) == str {
+    // If string starts with #, treat as hex color
+    if color.starts-with("#") {
+      rgb(color)
+    } else {
+      // Otherwise treat as named color
+      eval(color)
+    }
+  } else {
+    color
+  }
+
   let headings = query(selector(heading))
 
   // Filter by depth if max-depth is specified
@@ -160,7 +174,7 @@
     radius: 0.25em,
     {
       set par(leading: line-spacing, justify: false)
-      set text(size: text-size)
+      set text(size: text-size, fill: outline-color)
 
       // Header
       text(font: symbol-font)[#raw(header, block: false, lang: none)]
@@ -172,7 +186,6 @@
         let padding = " " * (max-page-width - page-str.len())
         let padded-page = padding + page-str
 
-        // Build the line with clickable text, using 1fr box for dot leaders or spaces to right-align page numbers
         box(width: 100%)[
           #text(font: symbol-font)[#raw(line.prefix, block: false, lang: none)]#link(line.location)[#text(font: text-font)[#line.text]]
           #box(width: 1fr, if use-dots { repeat[.] } else { h(0pt) })

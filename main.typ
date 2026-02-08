@@ -1,4 +1,4 @@
-#import "@local/clean-cnam-template:1.3.0": *
+#import "@local/clean-cnam-template:1.6.2": *
 #import "@preview/glossy:0.8.0": *
 #import "custom-outline.typ": *
 #import "glossary.typ": my-glossary
@@ -39,15 +39,28 @@
 
 #show: clean-cnam-template.with(
     author: "Tom Planche",
-    title: "Rapport d'activités",
+    colors: (
+        main: "#0B607E",
+    ),
+    fonts: (
+        default: (name: "Zed Plex Sans", weight: 400),
+        title: (name: "0xProto Nerd Font", weight: 700),
+    ),
+    cover: (
+        title: (font: "0xProto Nerd Font"),
+        subtitle: (font: "Zed Plex Sans"),
+    ),
+    logo: image("./assets/cnam_logo.svg"),
     outline-code: tree-outline(
         symbol-font: "Snap-it mono-1.6",
         text-font: "Zed Plex Mono",
         number-font: "Zed Plex Mono",
         text-size: 1.35em,
-        max-depth: 2
+        max-depth: 2,
+        color: "#0B607E"
     ),
-    main-color: "0B607E"
+    subtitle: "Premiere annee d'alternance",
+    title: "Rapport d'activites",
 )
 
 // Fonction pour créer un terme cliquable vers le glossaire
@@ -80,13 +93,11 @@ Avant de commencer la lecture de ce mémoire, je tiens à adresser mes sincères
 
 Je souhaite tout d'abord remercier l'entreprise Affluences pour m'avoir accueilli. J'ai particulièrement apprécié l'environnement de travail agréable et la liberté qui m'a été accordée dans le choix de mes outils de développement, me permettant de travailler dans des conditions optimales. Je remercie également l'ensemble de mes collègues pour leur accueil et la bonne ambiance générale.
 
-Mes remerciements s'adressent tout particulièrement à mon maître d'apprentissage, Luis Valdes. Sa disponibilité constante, ses conseils avisés et son accompagnement m'ont été précieux tout au long de l'année. Son management bienveillant, alliant confiance et soutien, m'a permis de m'épanouir dans mes missions.
+Mes remerciements s'adressent tout particulièrement à mon maître d'apprentissage, Luis Valdes. Sa disponibilité constante, ses conseils avisés et son accompagnement m'ont été précieux tout au long de l'année. Son management bienveillant, alliant confiance et soutien, m'a permis de m'épanouir tant dans l'entreprise que dans mes missions.
 
 Je remercie également Micaël Pais Novo, CTO d'Affluences, pour sa disponibilité et la confiance qu'il m'a témoignée, me permettant de travailler en autonomie tout en sachant que je pouvais compter sur son aide.
 
 Enfin, je souhaite exprimer ma gratitude à mes collègues pour leur aide précieuse. Merci à Jean-Charles Moussé pour son soutien sur le projet `app-api`, à Raphaël Galmiche pour son aide sur les déploiements, et à Justine Ribas pour ses éclaircissements sur `data-service`.
-
-Je tiens aussi à remercier Nora Gabillé pour les nombreuses relectures et corrections de mes documents.
 
 #pagebreak()
 
@@ -98,7 +109,7 @@ réalisée en alternance au sein de l'École d’Ingénieur du Conservatoire Nat
 
 J'ai donc intégré en alternance l'équipe #g("backend") d'#link(<affluences>)[Affluences], une entreprise française innovante spécialisée dans
 la gestion de l'affluence et l'optimisation des flux de visiteurs.
-J'intègre la partie *Internal Services* en tant que *développeur #g("backend")*.
+J'intègre la partie *Internal Services* en tant que *développeur* #g("backend").
 
 == Affluences <affluences>
 
@@ -111,9 +122,6 @@ La force d'Affluences réside dans sa solution technologique complète et intég
 L'équipe technique d'une cinquantaine de collaborateurs est organisée en pôles spécialisés : *Data* (traitement des flux de données en temps réel), *Computer Vision* (algorithmes d'#g("iot", mode: "long") avec intelligence artificielle), *Infra* (infrastructure et sécurité), *Web* (interfaces utilisateur), et *Service* (#g("api", mode: "pl") et #g("microservices")). L'entreprise s'appuie sur un stack technologique moderne incluant #g("nodejs") et #g("nestjs") pour le #g("backend"), #g("kafka") pour le streaming de données, #g("airflow") et #g("argoworkflow") pour l'orchestration des workflows, #g("kubernetes") pour l'orchestration de conteneurs, et #g("datadog") pour le monitoring des applications. L'équipe a récemment adopté une architecture #g("monorepo") pour certains projets, améliorant la modularité et la maintenance. L'organisation suit une méthodologie #g("agile") avec des sprints de 2 semaines.
 
 C'est au sein de cette #g("scaleup") innovante, qui promeut une culture d'autonomie et d'actionnariat salarié universel, que j'ai eu l'opportunité de réaliser mon alternance.
-
-
-
 
 = Environnement de Travail
 
