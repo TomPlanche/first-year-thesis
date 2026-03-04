@@ -1,5 +1,8 @@
-#import "@local/clean-cnam-template:1.6.2": *
-#import "@preview/glossy:0.8.0": *
+#import "@local/clean-cnam-template:1.6.4": *
+
+#import "@preview/glossy:0.9.0": *
+#import "@preview/orchid:0.1.0": generate-link
+
 #import "custom-outline.typ": *
 #import "glossary.typ": my-glossary
 
@@ -38,7 +41,7 @@
 )
 
 #show: clean-cnam-template.with(
-    author: "Tom Planche",
+    author: (name: "Tom Planche", orcid: "0009-0005-6032-3201"),
     colors: (
         main: "#0B607E",
     ),
@@ -48,6 +51,11 @@
     ),
     cover: (
         title: (font: "0xProto Nerd Font"),
+        second-logo: (
+            dx: 5pt,
+            image: image("./assets/affluences_logo.png"),
+            scale: .75,
+        ),
         subtitle: (font: "Zed Plex Sans"),
     ),
     logo: image("./assets/cnam_logo.svg"),
