@@ -274,6 +274,8 @@ Le problème résidait dans l'architecture des requêtes du `AttendanceStatsRepo
   - Performance dégradant de manière exponentielle avec la taille de la période
 ]
 
+#pagebreak()
+
 === Solution architecturale
 
 L'optimisation a consisté à inverser la stratégie de requêtage pour exploiter l'indexation existante de la base de données.
@@ -383,8 +385,8 @@ Cette approche améliore la testabilité et suit les patterns architecturaux exi
     columns: (auto, auto, auto, auto),
     align: (left, right, right, left),
     [*Métrique*], [*Avant*], [*Après*], [*Amélioration*],
-    [Requête 30 jours], [90+ secondes], [40 ms], [×2 250],
-    [Requête 1 an], [Crash (timeout)], [220 ms], [∞ → 220 ms],
+    [Requête sur 30 jours], [90+ secondes], [40 ms], [×2 250],
+    [Requête sur 1 an], [Crash (timeout)], [220 ms], [∞ → 220 ms],
     [Opération DB], [Full table scan], [Index seek], [—],
     [Comportement], [Dégradation exp.], [Performance linéaire], [—],
   )
