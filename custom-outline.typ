@@ -7,6 +7,7 @@
   max-depth: none,  // Maximum heading level to include (none = all levels)
   use-dots: true,  // Use dots to separate text from page numbers (if false, uses spaces)
   color: black,  // Color for the entire outline - accepts hex strings ("#0B607E"), color names ("blue"), or color values
+  exclude-children: (),  // List of heading titles (strings) whose children should not appear in the outline
 ) = context {
   // Convert color parameter to proper color type
   let outline-color = if type(color) == str {
@@ -127,7 +128,7 @@
 
     result.push((prefix: line, text: child.text, text-str: text-str, full-line: full-line, page: child.page, location: child.location))
 
-    if child.children.len() > 0 {
+    if child.children.len() > 0 and not exclude-children.contains(text-str) {
       let new-ancestors = ancestor-is-last + (is-last,)
       for (i, grandchild) in child.children.enumerate() {
         let child-lines = render-child(grandchild, prefix-depth, i == child.children.len() - 1, new-ancestors)
@@ -155,7 +156,7 @@
 
     lines.push((prefix: line, text: title.text, text-str: text-str, full-line: full-line, page: title.page, location: title.location))
 
-    if title.children.len() > 0 {
+    if title.children.len() > 0 and not exclude-children.contains(text-str) {
       for (j, child) in title.children.enumerate() {
         let child-lines = render-child(child, prefix-depth, j == title.children.len() - 1, ())
         lines = lines + child-lines

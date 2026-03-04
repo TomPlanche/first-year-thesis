@@ -57,10 +57,11 @@
         number-font: "Zed Plex Mono",
         text-size: 1.35em,
         max-depth: 2,
-        color: "#0B607E"
+        color: "#0B607E",
+        exclude-children: ("Glossaire",),
     ),
-    subtitle: "Premiere annee d'alternance",
-    title: "Rapport d'activites",
+    subtitle: "Première année d'alternance",
+    title: "Rapport d'activité",
 )
 
 // Fonction pour créer un terme cliquable vers le glossaire
@@ -228,8 +229,16 @@ L'environnement de travail chez Affluences est celui d'une #g("scaleup") technol
 La requête #g("graphql") `getAttendanceStatsForAPeriod` présentait des problèmes de performance critiques pour les plages de dates supérieures à un mois. Les requêtes prenaient plus de 90 secondes pour des périodes de 30 jours et crashaient complètement pour des requêtes sur une année entière.
 
 #my-block(
+    body-style: (
+        size: .9em,
+        weight: "regular",
+    ),
     content-align: left,
     title: "Symptômes observés :",
+    title-style: (
+        size: 1em,
+        weight: "bold",
+    ),
     width: 100%,
 )[
   - Requête 30 jours : *90+ secondes*
@@ -439,13 +448,13 @@ La solution réutilise l'infrastructure existante (`SensorsInternalHttpRepositor
 ]
 
 *Date de réalisation* : Octobre 2025 \
-*Statut* : [OK] Deploye en production et valide avec du trafic reel
+*Statut* : [OK] Deployé en production et valide avec du trafic reel
 
 #pagebreak()
 
 = Glossaire <glossaire>
 
-Ce glossaire regroupe les termes techniques utilises dans ce document, classes par categorie pour faciliter la comprehension.
+Ce glossaire regroupe les termes techniques utilises dans ce document, classés par categorie pour faciliter la comprehension.
 
 #{
   // Affichage personnalisé du glossaire par groupe
@@ -459,7 +468,7 @@ Ce glossaire regroupe les termes techniques utilises dans ce document, classes p
     })
 
     if terms.len() > 0 {
-      [=== #group]
+      [== #group]
 
       table(
         columns: (30%, 1fr),
