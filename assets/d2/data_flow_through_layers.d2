@@ -1,0 +1,29 @@
+direction: right
+
+requete: "↓ Requête entrante" {
+  direction: down
+  http_in: "Corps HTTP"
+  dto: "DTO (validation)"
+  adapter_in: "Adapter"
+  modele_in: "Modèle métier"
+  service_in: "Service"
+  repository: "Repository"
+  entite_in: "Entité"
+  bd: "BD" {shape: cylinder}
+
+  http_in -> dto -> adapter_in -> modele_in -> service_in -> repository -> entite_in -> bd
+}
+
+reponse: "↓ Réponse sortante" {
+  direction: down
+  bd2: "BD" {shape: cylinder}
+  entite_out: "Entité"
+  adapter_out1: "Adapter"
+  modele_out: "Modèle métier"
+  service_out: "Service"
+  adapter_out2: "Adapter"
+  dto_out: "DTO"
+  http_out: "Corps HTTP"
+
+  bd2 -> entite_out -> adapter_out1 -> modele_out -> service_out -> adapter_out2 -> dto_out -> http_out
+}

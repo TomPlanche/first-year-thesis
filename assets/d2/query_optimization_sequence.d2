@@ -1,0 +1,19 @@
+shape: sequence_diagram
+
+resolver: "Résolveur GraphQL"
+controller: "AttendanceStatsController"
+sensors: "SensorsInternalHttpRepository"
+repo: "AttendanceStatsRepository"
+db: "MySQL"
+
+resolver -> controller: "getAttendanceStatsForAPeriod(siteId, from, to)"
+
+controller -> sensors: "getMeasuringSets({ siteIds: [siteId] })"
+sensors -> controller: "measuringSetIds[]  (~10-20 ms)"
+
+controller -> repo: "getStats(measuringSetIds, from, to)"
+repo -> db: "WHERE measuring_set_id IN (...)\n  AND record_datetime_utc BETWEEN ..."
+db -> repo: "résultats (index seek)"
+repo -> controller: "AttendanceStats"
+
+controller -> resolver: "réponse (~40 ms total)"

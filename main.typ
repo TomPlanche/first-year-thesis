@@ -1,4 +1,4 @@
-#import "@local/clean-cnam-template:1.6.6": *
+#import "@local/clean-cnam-template:1.6.7": *
 
 #import "@preview/glossy:0.9.0": *
 #import "@preview/orchid:0.1.0": generate-link
@@ -41,23 +41,42 @@
   }
 )
 
+#let main-color = "#0B2630"
+
 #show: clean-cnam-template.with(
-    author: (name: "Tom Planche", orcid: "0009-0005-6032-3201"),
+    author: (
+        mail: "tomplanche@icloud.com",
+        name: "Tom Planche",
+        orcid: "0009-0005-6032-3201"
+    ),
     colors: (
-        main: "#0B607E",
+        main: main-color,
     ),
     fonts: (
         default: (name: "Zed Plex Sans", weight: 400),
         title: (name: "0xProto Nerd Font", weight: 700),
     ),
     cover: (
-        title: (font: "0xProto Nerd Font"),
+        title: (
+            text: "Rapport d'activité: Affluences",
+            font: "PP Supply Mono",
+            weight: 700
+        ),
+        subtitle: (
+            text: "Première année d'alternance",
+            font: "PP Supply Mono",
+            weight: 700
+        ),
+        subsubtitle: (
+            text: "Maître d’apprentissage: Luis Valdez\nTuteur Enseignant: Faten Atigui",
+            font: "PP Supply Mono",
+            weight: 400
+        ),
         second-logo: (
             dx: 5pt,
             image: image("./assets/affluences_logo.png"),
-            scale: .75,
+            scale: .8,
         ),
-        subtitle: (font: "Zed Plex Sans"),
     ),
     logo: image("./assets/cnam_logo.svg"),
     outline-code: tree-outline(
@@ -66,11 +85,11 @@
         number-font: "Zed Plex Mono",
         text-size: 1.35em,
         max-depth: 2,
-        color: "#0B607E",
+        color: main-color,
         exclude-children: ("Glossaire",),
     ),
-    subtitle: "Première année d'alternance",
-    title: "Rapport d'activité",
+    start-date: none,
+    year: 2025
 )
 
 // Fonction pour créer un terme cliquable vers le glossaire
@@ -95,17 +114,19 @@
   }
 }
 
+#let affluences-link = link("https://affluences.com/fr/")[Affluences]
+
 #show: init-glossary.with(my-glossary)
 
 = Remerciements
 
 Avant de commencer la lecture de ce mémoire, je tiens à adresser mes sincères remerciements aux personnes qui ont contribué au bon déroulement de mon année d'alternance et à la réalisation de ce document.
 
-Je souhaite tout d'abord remercier l'entreprise Affluences pour m'avoir accueilli. J'ai particulièrement apprécié l'environnement de travail agréable et la liberté qui m'a été accordée dans le choix de mes outils de développement, me permettant de travailler dans des conditions optimales. Je remercie également l'ensemble de mes collègues pour leur accueil et la bonne ambiance générale.
+Je souhaite tout d'abord remercier l'entreprise #affluences-link pour m'avoir accueilli. J'ai particulièrement apprécié l'environnement de travail agréable et la liberté qui m'a été accordée dans le choix de mes outils de développement, me permettant de travailler dans des conditions optimales. Je remercie également l'ensemble de mes collègues pour leur accueil et la bonne ambiance générale.
 
 Mes remerciements s'adressent tout particulièrement à mon maître d'apprentissage, Luis Valdes. Sa disponibilité constante, ses conseils avisés et son accompagnement m'ont été précieux tout au long de l'année. Son management bienveillant, alliant confiance et soutien, m'a permis de m'épanouir tant dans l'entreprise que dans mes missions.
 
-Je remercie également Micaël Pais Novo, CTO d'Affluences, pour sa disponibilité et la confiance qu'il m'a témoignée, me permettant de travailler en autonomie tout en sachant que je pouvais compter sur son aide.
+Je remercie également Micaël Pais Novo, CTO, pour sa disponibilité et la confiance qu'il m'a témoignée, me permettant de travailler en autonomie tout en sachant que je pouvais compter sur son aide.
 
 Enfin, je souhaite exprimer ma gratitude à mes collègues pour leur aide précieuse. Merci à Jean-Charles Moussé pour son soutien sur le projet `app-api`, à Raphaël Galmiche pour son aide sur les déploiements, et à Justine Ribas pour ses éclaircissements sur `data-service`.
 
@@ -113,19 +134,20 @@ Enfin, je souhaite exprimer ma gratitude à mes collègues pour leur aide préci
 
 Ce rapport dresse le bilan de mon expérience en entreprise au cours de l'année scolaire 2025-2026.
 Ce parcours s'inscrit dans le cadre de ma formation d'ingénieur en informatique et systèmes d'information,
-réalisée en alternance au sein de l'École d’Ingénieur du Conservatoire National des Arts et Métiers (EI-CNAM)
+réalisée en alternance au sein de l'École d’Ingénieur du Conservatoire National des Arts et Métiers (#link("https://ecole-ingenieur.cnam.fr/", [EI-CNAM])).
 
 J'ai donc intégré en alternance l'équipe #g("backend") d'#link(<affluences>)[Affluences], une entreprise française innovante spécialisée dans
 la gestion de l'affluence et l'optimisation des flux de visiteurs.
+Cette année représentait pour moi une toute nouvelle aventure : mes premiers mois au sein de la société, une immersion complète dans un environnement professionnel exigeant et stimulant.
 J'intègre la partie *Internal Services* en tant que *développeur* #g("backend").
 
 == Affluences <affluences>
 
-Affluences est une entreprise française fondée en 2014, aujourd'hui leader européen de la mesure et de la prévision d'affluence en temps réel. Avec plus de *10 ans d'expertise*, sa mission est de transformer la gestion des flux de visiteurs en une expérience fluide et optimisée, tant pour les établissements que pour leurs usagers.
+#affluences-link est une entreprise française fondée en 2014, aujourd'hui leader européen de la mesure et de la prévision d'affluence en temps réel. Avec plus de *10 ans d'expertise*, sa mission est de transformer la gestion des flux de visiteurs en une expérience fluide et optimisée, tant pour les établissements que pour leurs usagers.
 
-L'entreprise affiche des résultats impressionnants : *1 800 établissements clients* répartis à travers l'Europe, une application mobile notée *4,8/5* utilisée par plus d'*un million de personnes*, et *13 millions de consultations mensuelles*. Affluences a réalisé une levée de fonds de 4 millions d'euros en 2020 et compte parmi ses clients des institutions de renom comme le Musée du Louvre, la Tour Eiffel, la SNCF et l'Université de Cambridge.
+L'entreprise affiche des résultats impressionnants : *1 800 établissements clients* répartis à travers l'Europe, une application mobile notée *4,8/5* utilisée par plus d'*un million de personnes*, et *13 millions de consultations mensuelles*. Elle a réalisé une levée de fonds de 4 millions d'euros en 2020 et compte parmi ses clients des institutions de renom comme le Musée du Louvre, la Tour Eiffel, la SNCF et l'Université de Cambridge.
 
-La force d'Affluences réside dans sa solution technologique complète et intégrée, qui combine des capteurs #g("iot") propriétaires pour la collecte de données, des algorithmes prédictifs pour anticiper les pics d'activité, et des plateformes de communication multi-canaux pour informer les utilisateurs en temps réel. L'entreprise déploie ses solutions sur *huit secteurs verticaux* distincts : bibliothèques et médiathèques, musées et lieux culturels, universités et smart campus, collectivités et smart cities, transports publics, espaces naturels, entreprises et smart buildings, retail et événements.
+Sa force réside dans une solution technologique complète et intégrée, qui combine des capteurs #g("iot") propriétaires pour la collecte de données, des algorithmes prédictifs pour anticiper les pics d'activité, et des plateformes de communication multi-canaux pour informer les utilisateurs en temps réel. L'entreprise déploie ses solutions sur *huit secteurs verticaux* distincts : bibliothèques et médiathèques, musées et lieux culturels, universités et smart campus, collectivités et smart cities, transports publics, espaces naturels, entreprises et smart buildings, retail et événements.
 
 L'équipe technique d'une cinquantaine de collaborateurs est organisée en pôles spécialisés : *Data* (traitement des flux de données en temps réel), *Computer Vision* (algorithmes d'#g("iot", mode: "long") avec intelligence artificielle), *Infra* (infrastructure et sécurité), *Web* (interfaces utilisateur), et *Service* (#g("api", mode: "pl") et #g("microservices")). L'entreprise s'appuie sur un stack technologique moderne incluant #g("nodejs") et #g("nestjs") pour le #g("backend"), #g("kafka") pour le streaming de données, #g("airflow") et #g("argoworkflow") pour l'orchestration des workflows, #g("kubernetes") pour l'orchestration de conteneurs, et #g("datadog") pour le monitoring des applications. L'équipe a récemment adopté une architecture #g("monorepo") pour certains projets, améliorant la modularité et la maintenance. L'organisation suit une méthodologie #g("agile") avec des sprints de 2 semaines.
 
@@ -133,25 +155,25 @@ C'est au sein de cette #g("scaleup") innovante, qui promeut une culture d'autono
 
 = Environnement de Travail
 
-Mon alternance s'est déroulée au sein d'un environnement de travail stimulant, caractérisé par une forte culture d'entreprise et une organisation agile et moderne. Cette section détaille les conditions de travail, l'environnement technique, et les méthodologies qui régissent le quotidien chez Affluences.
+Mon alternance s'est déroulée au sein d'un environnement de travail stimulant, caractérisé par une forte culture d'entreprise et une organisation agile et moderne. Cette section détaille les conditions de travail, l'environnement technique, et les méthodologies qui régissent le quotidien au sein de la société.
 
 == Conditions de travail et intégration
 
-L'environnement de travail chez Affluences se distingue par une culture d'entreprise fondée sur la confiance, l'autonomie et la prise d'initiative. Avec une équipe d'une cinquantaine de personnes, l'organisation conserve une hiérarchie aplatie qui favorise la communication directe et la collaboration.
+L'environnement de travail au sein de l'entreprise se distingue par une culture fondée sur la confiance, l'autonomie et la prise d'initiative. Avec une équipe d'une cinquantaine de personnes, l'organisation conserve une hiérarchie aplatie qui favorise la communication directe et la collaboration.
 
-Un aspect particulièrement marquant de la culture d'Affluences est son modèle d'actionnariat salarié universel : chaque employé est actionnaire, ce qui aligne les intérêts de tous sur le succès collectif de l'entreprise. La transparence est également une valeur clé, avec une communication ouverte sur les résultats et la stratégie de l'entreprise.
+Un aspect particulièrement marquant est son modèle d'actionnariat salarié universel : chaque employé est actionnaire, ce qui aligne les intérêts de tous sur le succès collectif de l'entreprise. La transparence est également une valeur clé, avec une communication ouverte sur les résultats et la stratégie de l'entreprise.
 
 L'intégration des nouveaux arrivants, et notamment des alternants, est facilitée par un système de mentorat et des perspectives d'évolution interne concrètes, illustrées par des parcours comme celui du Lead Mobile, qui a débuté en tant que stagiaire.
 
 #no-numbering()
 === Environnement technique et outils
 
-L'écosystème technique d'Affluences est riche et moderne, conçu pour supporter une plateforme traitant des millions d'utilisateurs et des centaines de millions de points de données annuellement.
+Son écosystème technique est riche et moderne, conçu pour supporter une plateforme traitant des millions d'utilisateurs et des centaines de millions de points de données annuellement.
 
 #no-numbering()
 ==== Stack technique principale
 
-L'architecture #g("backend") repose sur une approche #g("microservices"), utilisant principalement #g("nodejs") et *Python* pour le traitement des données. La communication asynchrone entre les services est assurée par #g("rabbitmq"). Côté #g("frontend"), les applications web s'appuient sur #g("angular"), tandis que l'application mobile a été développée avec #g("flutter"), le framework cross-platform de Google.
+L'architecture #g("backend") repose sur une approche #g("microservices"), utilisant principalement #g("nodejs") et *Python* pour le traitement des données. La communication asynchrone entre les services est assurée par #g("kafka"). Côté #g("frontend"), les applications web s'appuient sur #g("angular"), tandis que l'application mobile a été développée avec #g("flutter"), le framework cross-platform de Google.
 
 #no-numbering()
 ==== Langages et frameworks
@@ -169,7 +191,7 @@ L'infrastructure est hébergée sur le #g("cloud") français OVHcloud pour garan
 #no-numbering()
 ==== Architecture logicielle : Clean Architecture
 
-Tous les #g("microservices") développés chez Affluences suivent un pattern *Clean Architecture* rigoureux, qui impose une séparation stricte des responsabilités entre les couches logicielles. L'objectif est d'isoler la logique métier de toute dépendance technique (base de données, framework HTTP, messagerie), rendant le code testable et évolutif indépendamment de son infrastructure.
+Tous les #g("microservices") développés en interne suivent un pattern *Clean Architecture* rigoureux, qui impose une séparation stricte des responsabilités entre les couches logicielles. L'objectif est d'isoler la logique métier de toute dépendance technique (base de données, framework HTTP, messagerie), rendant le code testable et évolutif indépendamment de son infrastructure.
 
 #no-numbering()
 ===== Structure en couches
@@ -198,7 +220,8 @@ Chaque service est organisé selon une arborescence de modules reproductible :
                 └── device.controller.ts
     ```,
     text-style: (
-        font: "Departure Mono"
+        font: "Departure Mono",
+        size: 8pt
     )
 )
 
@@ -231,6 +254,7 @@ L'implémentation concrète, qui dépend de TypeORM et MySQL, vit dans `reposito
 
         async findById(deviceId: number): Promise<Device | null> {
             const entity = await this.repo.findOne({ where: { deviceId } });
+
             return entity ? DeviceAdapter.toDomain(entity) : null;
         }
     }
@@ -250,17 +274,11 @@ Une distinction rigoureuse est maintenue entre trois catégories de types qui ne
   - *#g("dto", mode: "pl")* : types à la frontière de l'#g("api"). Définis pour les corps de requête et les réponses REST, ils sont décorés pour la validation (`class-validator`) et la documentation Swagger. Ils ne contiennent aucune logique métier.
 ]
 
-#my-block(
-    content-align: left,
-    title: "Flux de données à travers les couches",
-    width: 100%
-)[
-  *Requête entrante :* \
-  `Corps HTTP` → `DTO` (validation) → `Adapter` → `Modèle métier` → `Service` → `Repository` → `Entité` → BD
 
-  *Réponse sortante :* \
-  BD → `Entité` → `Adapter` → `Modèle métier` → `Service` → `Adapter` → `DTO` → `Corps HTTP`
-]
+#figure(
+    image("./assets/d2/data_flow_through_layers.png"),
+    caption: "Flux de données à travers les couches"
+)
 
 #no-numbering()
 ===== Adapters
@@ -297,7 +315,7 @@ Ce pattern garantit que la forme des données en base de données ne dicte jamai
 #no-numbering()
 ===== Bénéfices observés
 
-En pratique, cette architecture apporte trois avantages concrets au sein des équipes Affluences :
+En pratique, cette architecture apporte trois avantages concrets au sein des équipes :
 
 #example(title: "Apports de la Clean Architecture")[
   1. *Testabilité* : les services peuvent être testés unitairement en injectant un repository en mémoire, sans base de données réelle.
@@ -389,7 +407,7 @@ Le processus de publication s'appuie sur des *branches de release* dédiées, no
 
   *Phase 2 --- Release définitive :*
 
-  Après validation, la version finale `1.2.3` est publiée. *release-it* génère le `CHANGELOG` complet, crée le tag `v1.2.3`, publie le package sur le registry npm interne, puis la branche `release/1.2.3` est fusionnée dans `main`.
+  Après validation, la version finale `1.2.3` est publiée. *release-it* génère le `CHANGELOG` complet, crée le tag `v1.2.3`, publie le package sur le registry npm interne de la société, puis la branche `release/1.2.3` est fusionnée dans `main`.
 ]
 
 *release-it* orchestre automatiquement les étapes suivantes à chaque publication :
@@ -399,9 +417,14 @@ Le processus de publication s'appuie sur des *branches de release* dédiées, no
 - Mise à jour de `package.json` et `package-lock.json`
 - Génération ou mise à jour du fichier `CHANGELOG.md`
 - Création du commit de release et du tag git signé
-- Publication sur le registry npm interne d'Affluences
+- Publication sur le registry npm interne
 
 Ce processus garantit une traçabilité complète des livraisons : chaque version déployée correspond à un tag git précis, et son contenu est documenté dans le changelog généré automatiquement depuis les commits conventionnels.
+
+#figure(
+  image("./assets/d2/git_workflow.png", width: 100%),
+  caption: [Workflow Git : cycle de développement et de publication des versions]
+)
 
 #no-numbering()
 === Organisation du travail en mode #g("agile")
@@ -409,7 +432,7 @@ Ce processus garantit une traçabilité complète des livraisons : chaque versio
 #no-numbering()
 ==== Méthodologie de développement
 
-Affluences a adopté une approche de développement #g("agile") rythmée par des #g("sprint", mode: "pl") d'une semaine. Bien qu'un framework spécifique comme #g("scrum") ne soit pas formellement appliqué dans toute sa rigueur, l'organisation du travail s'articule autour de cycles de développement itératifs et de rituels hebdomadaires bien établis.
+L'entreprise a adopté une approche de développement #g("agile") rythmée par des #g("sprint", mode: "pl") d'une semaine. Bien qu'un framework spécifique comme #g("scrum") ne soit pas formellement appliqué dans toute sa rigueur, l'organisation du travail s'articule autour de cycles de développement itératifs et de rituels hebdomadaires bien établis.
 
 Parmi ces rituels, on retrouve :
 - Le `suivi-services`, qui se tient chaque lundi à 10h30. Cette réunion permet à chaque membre de l'équipe de partager ses avancées et les points de blocage éventuels.
@@ -430,7 +453,12 @@ L'équipe de développement suit les conventions du #g("semver", mode: "long") p
 #no-numbering()
 ==== Architecture orientée services
 
-L'architecture #g("microservices") permet de découpler les différentes parties de la plateforme. Chaque service est responsable d'une fonctionnalité métier spécifique et peut être développé, déployé et mis à l'échelle indépendamment des autres. #g("rabbitmq") joue un rôle crucial en permettant à ces services de communiquer de manière asynchrone et fiable.
+L'architecture #g("microservices") permet de découpler les différentes parties de la plateforme. Chaque service est responsable d'une fonctionnalité métier spécifique et peut être développé, déployé et mis à l'échelle indépendamment des autres. #g("kafka") joue un rôle crucial en permettant à ces services de communiquer de manière asynchrone et fiable.
+
+#figure(
+  image("./assets/d2/microservices_architecture.png", width: 100%),
+  caption: [Topologie des services internes et de leur communication]
+)
 
 #no-numbering()
 ==== Standards de qualité
@@ -454,7 +482,7 @@ La communication est fluide et directe grâce à la hiérarchie aplatie. Les éq
 
 == Conclusion partielle
 
-L'environnement de travail chez Affluences est celui d'une #g("scaleup") technologique mature, qui a su conserver l'agilité et l'esprit d'initiative d'une startup tout en mettant en place des processus robustes pour garantir la qualité, la sécurité et la scalabilité de sa plateforme. La culture d'entreprise, axée sur l'autonomie, la transparence et l'intéressement collectif, constitue un atout majeur pour attirer et retenir les talents.
+Cet environnement de travail est celui d'une #g("scaleup") technologique mature, qui a su conserver l'agilité et l'esprit d'initiative d'une startup tout en mettant en place des processus robustes pour garantir la qualité, la sécurité et la scalabilité de sa plateforme. La culture d'entreprise, axée sur l'autonomie, la transparence et l'intéressement collectif, constitue un atout majeur pour attirer et retenir les talents.
 
 = Missions
 
@@ -495,23 +523,17 @@ Le problème résidait dans l'architecture des requêtes du `AttendanceStatsRepo
 - Parsing #g("json") pour chaque ligne de la table
 - Performance dégradant de manière exponentielle avec la taille de la période
 
+#pagebreak()
+
 === Solution architecturale
 
 L'optimisation a consisté à inverser la stratégie de requêtage pour exploiter l'indexation existante de la base de données.
 
-#my-block(
-    content-align: left,
-    title: "Principe de la solution :",
-    width: 100%,
-)[
-  *Approche initiale (lente)* : \
-  `site_id -> [Scan complet + parsing JSON] -> Resultats`
+#figure(
+  image("./assets/d2/query_plan_comparison.png", width: 100%),
+  caption: [Comparaison des plans d'exécution avant et après l'optimisation]
+)
 
-  *Nouvelle approche (optimisée)* : \
-  `site_id -> [Appel API] -> measuring_set_ids -> [Requete indexee] -> Resultats`
-]
-
-#pagebreak()
 
 Au lieu de requêter directement par `site_id` (stocké dans un champ #g("json")), la solution procède en deux étapes :
 
@@ -519,6 +541,11 @@ Au lieu de requêter directement par `site_id` (stocké dans un champ #g("json")
 2. *Requête par `measuring_set_id`* (colonne indexée) au lieu de `site_id` (champ #g("json"))
 
 Cette approche ajoute un appel #g("api") léger (~10-20ms) mais transforme la requête base de données de $O(n)$ en $O(log n)$.
+
+#figure(
+  image("./assets/d2/query_optimization_sequence.png", width: 90%),
+  caption: [Diagramme de séquence de la stratégie d'optimisation en deux étapes]
+)
 
 === Modifications techniques implémentées
 
@@ -692,7 +719,7 @@ La solution réutilise l'infrastructure existante (`SensorsInternalHttpRepositor
 #no-numbering()
 === Contexte et objectifs
 
-Dans le cadre de la gestion des applications mobiles Affluences, la plateforme repose sur des *millions d'appareils* enregistrés (smartphones iOS et Android).
+Dans le cadre de la gestion des applications mobiles de la société, la plateforme repose sur des *millions d'appareils* enregistrés (smartphones iOS et Android).
 Ces appareils communiquent avec le backend via une clé #g("api") qui sert à les authentifier et à les autoriser. Jusqu'alors, la logique de gestion de ces appareils était dispersée dans d'autres services.
 
 J'ai eu comme objectif de créer un nouveau #g("microservice") dédié, nommé `app-service`, afin de centraliser tout ce qui touche à la gestion des appareils et des versions applicatives.
@@ -716,7 +743,7 @@ La stack choisie est *NestJS* avec *TypeORM* pour l'accès à la base *MySQL*, e
 #no-numbering()
 === Architecture mise en place
 
-Le service suit le pattern *Clean Architecture* adopté chez Affluences, avec une séparation claire entre :
+Le service suit le pattern *Clean Architecture* adopté en interne, avec une séparation claire entre :
 
 - `core/` : interfaces/abstractions (contrats de repository)
 - `modules/<feature>/entities/` : entités TypeORM (mapping base de données)
@@ -805,6 +832,11 @@ L'entité représente une version de l'application mobile :
         betaBuild!: boolean;
     }
     ```
+)
+
+#figure(
+  image("./assets/d2/app_service_er.png", width: 85%),
+  caption: [Schéma des tables gérées par `app-service`]
 )
 
 #no-numbering()

@@ -99,11 +99,6 @@
     description: "Modele de fourniture de ressources informatiques (serveurs, stockage, bases de donnees) via Internet, sans avoir a gerer physiquement les machines.",
     group: "Infrastructure",
   ),
-  rabbitmq: (
-    short: "RabbitMQ",
-    description: "Logiciel de messagerie permettant a differentes applications de communiquer de maniere asynchrone via des files d'attente de messages. Utile pour decoupler les systemes et gerer les pics de charge.",
-    group: "Infrastructure",
-  ),
   redis: (
     short: "Redis",
     description: "Base de donnees en memoire tres rapide, souvent utilisee comme cache pour stocker temporairement des donnees frequemment consultees et accelerer les reponses.",

@@ -1,0 +1,40 @@
+direction: right
+
+clients: "Clients" {
+  mobile: "App Mobile\n(iOS / Android)" {shape: rectangle}
+  web: "Application Web" {shape: rectangle}
+}
+
+services: "Services Internes" {
+  app_api: "app-api" {
+    style.fill: "#2471a3"
+    style.font-color: white
+  }
+  app_service: "app-service\n(appareils, versions)" {
+    style.fill: "#0B2630"
+    style.font-color: white
+  }
+  data_service: "data-service\n(statistiques)" {
+    style.fill: "#0B2630"
+    style.font-color: white
+  }
+  sensors_service: "sensors-service\n(capteurs IoT)" {
+    style.fill: "#0B2630"
+    style.font-color: white
+  }
+}
+
+infra: "Infrastructure" {
+  kafka: "Kafka" {shape: queue}
+  mysql: "MySQL" {shape: cylinder}
+}
+
+clients.mobile -> services.app_api: "HTTPS"
+clients.web -> services.app_api: "HTTPS"
+services.app_api -> services.app_service: "HTTP REST"
+services.app_api -> services.data_service: "GraphQL"
+services.data_service -> services.sensors_service: "HTTP interne"
+services.data_service -> infra.mysql: "SQL"
+services.app_service -> infra.mysql: "TypeORM"
+services.data_service -> infra.kafka: "produce / consume"
+services.app_service -> infra.kafka: "consume"

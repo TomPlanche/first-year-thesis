@@ -1,0 +1,53 @@
+direction: down
+
+fonctionnalite: "Développement d'une fonctionnalité" {
+  direction: right
+
+  m1: "main" {
+    style.fill: "#0B2630"
+    style.font-color: white
+  }
+  feat: "feat/<feature>\nfix/<bug>\nchore/<task>" {shape: rectangle}
+  m2: "main" {
+    style.fill: "#0B2630"
+    style.font-color: white
+  }
+
+  m1 -> feat: "checkout"
+  feat -> m2: "Pull Request (revue de code)"
+}
+
+publication: "Publication d'une version" {
+  direction: right
+
+  m3: "main" {
+    style.fill: "#0B2630"
+    style.font-color: white
+  }
+  release: "release/1.2.3" {shape: rectangle}
+  rc: "v1.2.3-rc.1" {
+    shape: oval
+    style.fill: "#e67e22"
+    style.font-color: white
+  }
+  staging: "Validation\nStaging" {
+    shape: hexagon
+    style.fill: "#8e44ad"
+    style.font-color: white
+  }
+  tag: "v1.2.3" {
+    shape: oval
+    style.fill: "#27ae60"
+    style.font-color: white
+  }
+  m4: "main" {
+    style.fill: "#0B2630"
+    style.font-color: white
+  }
+
+  m3 -> release: "branche release"
+  release -> rc: "release-it RC"
+  rc -> staging
+  staging -> tag: "release-it final"
+  tag -> m4: "merge"
+}

@@ -1,0 +1,51 @@
+direction: right
+
+avant: "Approche initiale (lente)" {
+  direction: down
+
+  scan: "Full Table Scan\n(toutes les lignes)" {
+    style.fill: "#e74c3c"
+    style.font-color: white
+  }
+  json_parse: "JSON_EXTRACT()\n(parsing par ligne)" {
+    style.fill: "#e74c3c"
+    style.font-color: white
+  }
+  filter: "Filtre site_id" {
+    style.fill: "#e74c3c"
+    style.font-color: white
+  }
+  result1: "Résultat\n(90+ secondes)" {
+    style.fill: "#c0392b"
+    style.font-color: white
+  }
+
+  scan -> json_parse -> filter -> result1
+}
+
+apres: "Nouvelle approche (optimisée)" {
+  direction: down
+
+  api_call: "Appel API interne\n(~10-20 ms)" {
+    style.fill: "#27ae60"
+    style.font-color: white
+  }
+  ids: "measuringSetIds[]" {
+    style.fill: "#27ae60"
+    style.font-color: white
+  }
+  index_seek: "Index Seek\n(measuring_set_id IN)" {
+    style.fill: "#27ae60"
+    style.font-color: white
+  }
+  date_range: "Filtre date\n(index composite)" {
+    style.fill: "#27ae60"
+    style.font-color: white
+  }
+  result2: "Résultat\n(~40 ms)" {
+    style.fill: "#1e8449"
+    style.font-color: white
+  }
+
+  api_call -> ids -> index_seek -> date_range -> result2
+}
