@@ -1,4 +1,4 @@
-#import "@local/clean-cnam-template:1.6.4": *
+#import "@local/clean-cnam-template:1.6.6": *
 
 #import "@preview/glossy:0.9.0": *
 #import "@preview/orchid:0.1.0": generate-link
@@ -14,7 +14,8 @@
   },
   group: (name, index, total, body) => {
     if name != "" {
-      [=== #name]
+      [#no-numbering()
+=== #name]
     }
     table(
       columns: (30%, 1fr),
@@ -108,8 +109,6 @@ Je remercie également Micaël Pais Novo, CTO d'Affluences, pour sa disponibilit
 
 Enfin, je souhaite exprimer ma gratitude à mes collègues pour leur aide précieuse. Merci à Jean-Charles Moussé pour son soutien sur le projet `app-api`, à Raphaël Galmiche pour son aide sur les déploiements, et à Justine Ribas pour ses éclaircissements sur `data-service`.
 
-#pagebreak()
-
 = Introduction
 
 Ce rapport dresse le bilan de mon expérience en entreprise au cours de l'année scolaire 2025-2026.
@@ -144,14 +143,17 @@ Un aspect particulièrement marquant de la culture d'Affluences est son modèle 
 
 L'intégration des nouveaux arrivants, et notamment des alternants, est facilitée par un système de mentorat et des perspectives d'évolution interne concrètes, illustrées par des parcours comme celui du Lead Mobile, qui a débuté en tant que stagiaire.
 
+#no-numbering()
 === Environnement technique et outils
 
 L'écosystème technique d'Affluences est riche et moderne, conçu pour supporter une plateforme traitant des millions d'utilisateurs et des centaines de millions de points de données annuellement.
 
+#no-numbering()
 ==== Stack technique principale
 
 L'architecture #g("backend") repose sur une approche #g("microservices"), utilisant principalement #g("nodejs") et *Python* pour le traitement des données. La communication asynchrone entre les services est assurée par #g("rabbitmq"). Côté #g("frontend"), les applications web s'appuient sur #g("angular"), tandis que l'application mobile a été développée avec #g("flutter"), le framework cross-platform de Google.
 
+#no-numbering()
 ==== Langages et frameworks
 
 L'équipe de développement maîtrise un large éventail de langages et frameworks pour répondre aux besoins spécifiques de chaque partie de la plateforme :
@@ -159,33 +161,252 @@ L'équipe de développement maîtrise un large éventail de langages et framewor
 - *#g("frontend") :* JavaScript/#g("typescript") avec #g("angular"), #g("graphql") pour les #g("api", mode: "pl").
 - *Mobile :* Dart avec #g("flutter"), avec une expérience passée sur le natif (Swift/Kotlin).
 
+#no-numbering()
 ==== Infrastructure et déploiement
 
 L'infrastructure est hébergée sur le #g("cloud") français OVHcloud pour garantir la conformité #g("rgpd"). L'architecture distribuée s'appuie sur la conteneurisation avec #g("docker"), probablement orchestrée par #g("kubernetes"). Les bases de données suivent une approche multi-modèle, combinant probablement des bases de données relationnelles (#g("sql")), #g("nosql") (pour les séries temporelles des capteurs) et un cache en mémoire comme #g("redis") pour les données temps réel.
 
+#no-numbering()
+==== Architecture logicielle : Clean Architecture
+
+Tous les #g("microservices") développés chez Affluences suivent un pattern *Clean Architecture* rigoureux, qui impose une séparation stricte des responsabilités entre les couches logicielles. L'objectif est d'isoler la logique métier de toute dépendance technique (base de données, framework HTTP, messagerie), rendant le code testable et évolutif indépendamment de son infrastructure.
+
+#no-numbering()
+===== Structure en couches
+
+Chaque service est organisé selon une arborescence de modules reproductible :
+
+#code(
+    ```text
+    src/
+    ├── core/
+    │   └── repositories/
+    │       └── device.repository.ts    # Interface IDeviceRepository
+    └── modules/
+        └── devices/
+            ├── entities/               # Entités TypeORM (mapping BD)
+            │   └── device.entity.ts
+            ├── models/                 # Modèles métier internes
+            │   └── device.model.ts
+            ├── adapters/               # Conversion entité ↔ modèle
+            │   └── device.adapter.ts
+            ├── repositories/           # Implémentation MySQL
+            │   └── device-mysql.repository.ts
+            ├── services/               # Logique métier pure
+            │   └── device.service.ts
+            └── controllers/            # Exposition REST
+                └── device.controller.ts
+    ```,
+    text-style: (
+        font: "Departure Mono"
+    )
+)
+
+#no-numbering()
+===== Abstraction des repositories
+
+Les interfaces de repository sont définies dans `core/`, sans aucune dépendance à un moteur de base de données. La couche service ne connaît que ces contrats :
+
+#code(
+    ```typescript
+    // core/repositories/device.repository.ts
+    export interface IDeviceRepository {
+        findById(deviceId: number): Promise<Device | null>;
+        findByApiKey(apiKey: string): Promise<Device | null>;
+        save(device: CreateDeviceParams): Promise<Device>;
+    }
+    ```
+)
+
+L'implémentation concrète, qui dépend de TypeORM et MySQL, vit dans `repositories/` et implémente ce contrat :
+
+#code(
+    ```typescript
+    // modules/devices/repositories/device-mysql.repository.ts
+    @injectable()
+    export class DeviceMysqlRepository implements IDeviceRepository {
+        constructor(
+            @inject(DEVICE_ENTITY_REPO) private repo: Repository<DeviceEntity>,
+        ) {}
+
+        async findById(deviceId: number): Promise<Device | null> {
+            const entity = await this.repo.findOne({ where: { deviceId } });
+            return entity ? DeviceAdapter.toDomain(entity) : null;
+        }
+    }
+    ```
+)
+
+Cette indirection permet de substituer l'implémentation MySQL par une implémentation en mémoire lors des tests unitaires, sans modifier une seule ligne de la logique métier.
+
+#no-numbering()
+===== Ségrégation des types : Entités, Modèles et DTOs
+
+Une distinction rigoureuse est maintenue entre trois catégories de types qui ne doivent jamais se mélanger :
+
+#definition(title: "Trois catégories de types")[
+  - *Entités (#g("orm"))* : reflètent fidèlement la structure de la base de données. Décorées avec les annotations TypeORM (`@Entity`, `@Column`), elles ne sortent jamais de la couche infrastructure.
+  - *Modèles métier* : types internes au #g("microservice"), indépendants de tout moteur de persistance. Ce sont eux qui transitent dans la couche service et définissent le langage ubiquitaire du domaine.
+  - *#g("dto", mode: "pl")* : types à la frontière de l'#g("api"). Définis pour les corps de requête et les réponses REST, ils sont décorés pour la validation (`class-validator`) et la documentation Swagger. Ils ne contiennent aucune logique métier.
+]
+
+#my-block(
+    content-align: left,
+    title: "Flux de données à travers les couches",
+    width: 100%
+)[
+  *Requête entrante :* \
+  `Corps HTTP` → `DTO` (validation) → `Adapter` → `Modèle métier` → `Service` → `Repository` → `Entité` → BD
+
+  *Réponse sortante :* \
+  BD → `Entité` → `Adapter` → `Modèle métier` → `Service` → `Adapter` → `DTO` → `Corps HTTP`
+]
+
+#no-numbering()
+===== Adapters
+
+Les adapters sont des classes utilitaires statiques qui assurent la conversion bidirectionnelle entre les couches. Ils constituent la seule couche du code où deux types de représentations différents se côtoient :
+
+#code(
+    ```typescript
+    export class DeviceAdapter {
+        static toDomain(entity: DeviceEntity): Device {
+            return {
+                deviceId:      entity.deviceId,
+                identifier:    entity.identifier,
+                apiKey:        entity.apiKey,
+                isBlacklisted: entity.blacklist,
+                revokedAt:     entity.revokedAt ?? null,
+                revokedReason: entity.revokedReason ?? null,
+            };
+        }
+
+        static toResponseDto(model: Device): DeviceResponseDto {
+            return {
+                id:         model.deviceId,
+                identifier: model.identifier,
+                revoked:    model.revokedAt !== null,
+            };
+        }
+    }
+    ```
+)
+
+Ce pattern garantit que la forme des données en base de données ne dicte jamais la forme des objets métier, et vice-versa. Chaque couche peut évoluer indépendamment : renommer une colonne en base n'impacte que l'entité et son adapter, jamais la logique service ni les #g("dto", mode: "pl").
+
+#no-numbering()
+===== Bénéfices observés
+
+En pratique, cette architecture apporte trois avantages concrets au sein des équipes Affluences :
+
+#example(title: "Apports de la Clean Architecture")[
+  1. *Testabilité* : les services peuvent être testés unitairement en injectant un repository en mémoire, sans base de données réelle.
+  2. *Indépendance technologique* : passer de MySQL à PostgreSQL pour un service revient à écrire une nouvelle implémentation du repository, sans toucher à la logique métier.
+  3. *Lisibilité* : un développeur qui rejoint le projet sait immédiatement où se trouve chaque type de code grâce à la structure prévisible des modules.
+]
+
+#no-numbering()
 ==== Outils de productivité
 
 Conformément à la culture d'autonomie, les développeurs ont la liberté de choisir leurs outils de travail, que ce soit leur système d'exploitation (OS) ou leur environnement de développement intégré (IDE), leur permettant de travailler dans des conditions de confort optimales.
 
+#no-numbering()
 ==== Sécurité et accès aux ressources
 
 La sécurité est une priorité absolue. La plateforme est entièrement conforme au #g("rgpd", mode: "long"), avec des mesures strictes d'anonymisation des données, de limitation de la durée de conservation et de chiffrement (#g("ssl")).
 En complément de cette conformité, l'entreprise est actuellement en démarche pour obtenir la certification #g("iso27001"), la norme internationale de référence pour les systèmes de management de la sécurité de l'information, afin de formaliser et d'attester de la robustesse de ses processus.
 
+#no-numbering()
 ==== Observabilité et monitoring
 
 Le suivi de la plateforme en production est assuré par plusieurs outils. #g("sentry") est utilisé pour le tracking d'erreurs en temps réel. Une solution d'#g("apm", mode: "long") et un système de logging centralisé sont également en place pour superviser la performance des #g("microservices") et faciliter le débogage.
 
+#no-numbering()
 ==== Outils collaboratifs
 
 La collaboration est facilitée par la structure plate de l'entreprise et l'utilisation d'outils de communication modernes. Les réunions régulières comme les "Moments Affluences" et la transparence générale sur les objectifs permettent à chacun de comprendre sa contribution à la vision globale.
 
-==== Gestion des déploiements
+#no-numbering()
+==== Gestion des déploiements et workflow Git
 
-Les déploiements sont automatisés via un pipeline de #g("cicd", mode: "both"). Cette approche permet de livrer de nouvelles fonctionnalités de manière rapide et fiable, en s'assurant que chaque changement passe par une série de tests automatisés avant d'être mis en production. La stratégie de déploiement par phases, utilisée lors de la migration vers #g("flutter"), illustre la maturité de ces processus.
+Les déploiements sont automatisés via un pipeline de #g("cicd", mode: "both") et s'appuient sur un workflow Git structuré qui régit aussi bien le développement quotidien que le processus de publication des versions.
 
+#no-numbering()
+===== Branches de fonctionnalité
+
+Tout développement --- nouvelle fonctionnalité, correction de bug ou refactoring --- fait l'objet d'une branche dédiée créée depuis `main`. La convention de nommage suit le format `<type>/<description-courte>`, par exemple :
+
+#code(
+    ```text
+    feat/app-service-device-endpoint
+    fix/attendance-stats-timeout
+    chore/bump-commons-to-2.4.1
+    refactor/device-repository-abstraction
+    ```
+)
+
+Une fois les développements terminés, une *Pull Request* est ouverte pour une revue de code par au moins un autre développeur avant fusion dans `main`. Cette pratique garantit la cohésion du code et le partage de connaissances au sein de l'équipe.
+
+#no-numbering()
+===== Commits conventionnels
+
+Tous les commits doivent respecter la spécification *Conventional Commits*. Le format impose un type, un périmètre optionnel et une description courte :
+
+#code(
+    ```text
+    <type>(<périmètre>): <description courte>
+    ```
+)
+
+#example(title: "Exemples de commits")[
+  ```text
+  feat(devices): add PATCH endpoint for partial device update
+  fix(attendance): resolve timeout on 30-day period queries
+  chore(deps): bump @affluences/commons to 2.4.1
+  refactor(app-versions): extract pagination to shared utility
+  test(devices): add unit tests for DeviceAdapter
+  ci: update GitLab pipeline to Node 20
+  ```
+]
+
+Les types principaux reconnus sont `feat` (nouvelle fonctionnalité), `fix` (correction de bug), `chore` (maintenance), `refactor`, `test`, `docs` et `ci`. Une convention `BREAKING CHANGE` dans le pied de page signale les changements incompatibles et déclenche une incrémentation majeure du numéro de version.
+
+Cette convention rend l'historique git directement lisible et sert de base à la génération automatique des changelogs lors des publications.
+
+#no-numbering()
+===== Branches de release et publication avec release-it
+
+Le processus de publication s'appuie sur des *branches de release* dédiées, nommées `release/<version>` (ex : `release/1.2.3`). Ces branches concentrent tous les commits de publication générés automatiquement par l'outil *release-it*, qui orchestre l'ensemble du cycle de vie d'une version.
+
+#my-block(
+    content-align: left,
+    title: "Phases de publication d'une version",
+    width: 100%
+)[
+  *Phase 1 --- Release Candidate :*
+
+  Une première version candidate est générée depuis la branche de release (`1.2.3-rc.1`). *release-it* met à jour les fichiers `package.json`, génère un `CHANGELOG` partiel depuis les commits conventionnels et crée le tag git `v1.2.3-rc.1`. Cette RC est déployée en environnement de staging pour validation fonctionnelle.
+
+  *Phase 2 --- Release définitive :*
+
+  Après validation, la version finale `1.2.3` est publiée. *release-it* génère le `CHANGELOG` complet, crée le tag `v1.2.3`, publie le package sur le registry npm interne, puis la branche `release/1.2.3` est fusionnée dans `main`.
+]
+
+*release-it* orchestre automatiquement les étapes suivantes à chaque publication :
+
+- Validation que le dépôt est propre (pas de modifications non commitées)
+- Calcul du prochain numéro de version selon les règles du #g("semver", mode: "long") et des commits conventionnels
+- Mise à jour de `package.json` et `package-lock.json`
+- Génération ou mise à jour du fichier `CHANGELOG.md`
+- Création du commit de release et du tag git signé
+- Publication sur le registry npm interne d'Affluences
+
+Ce processus garantit une traçabilité complète des livraisons : chaque version déployée correspond à un tag git précis, et son contenu est documenté dans le changelog généré automatiquement depuis les commits conventionnels.
+
+#no-numbering()
 === Organisation du travail en mode #g("agile")
 
+#no-numbering()
 ==== Méthodologie de développement
 
 Affluences a adopté une approche de développement #g("agile") rythmée par des #g("sprint", mode: "pl") d'une semaine. Bien qu'un framework spécifique comme #g("scrum") ne soit pas formellement appliqué dans toute sa rigueur, l'organisation du travail s'articule autour de cycles de développement itératifs et de rituels hebdomadaires bien établis.
@@ -196,30 +417,37 @@ Parmi ces rituels, on retrouve :
 
 Cette organisation, combinée à des équipes cross-fonctionnelles, permet de livrer de la valeur en continu tout en maintenant une forte cohésion et une bonne circulation de l'information au sein du département technique.
 
+#no-numbering()
 ==== Pipeline #g("cicd")
 
 Le pipeline de #g("cicd") est au cœur de la méthodologie de développement. Il automatise la compilation, les tests et le déploiement du code, garantissant ainsi une haute qualité et une grande vélocité.
 
+#no-numbering()
 ==== Versionnage sémantique
 
 L'équipe de développement suit les conventions du #g("semver", mode: "long") pour gérer les versions de ses applications et services. Cela permet de communiquer clairement l'impact des changements (corrections de bugs, nouvelles fonctionnalités, changements cassants) aux autres équipes et aux utilisateurs de l'#g("api").
 
+#no-numbering()
 ==== Architecture orientée services
 
 L'architecture #g("microservices") permet de découpler les différentes parties de la plateforme. Chaque service est responsable d'une fonctionnalité métier spécifique et peut être développé, déployé et mis à l'échelle indépendamment des autres. #g("rabbitmq") joue un rôle crucial en permettant à ces services de communiquer de manière asynchrone et fiable.
 
+#no-numbering()
 ==== Standards de qualité
 
 La qualité est assurée par une combinaison de revues de code systématiques, de tests automatisés (unitaires, intégration) intégrés au pipeline de #g("cicd"), et d'un monitoring proactif en production. La robustesse de l'architecture est conçue pour supporter une charge élevée tout en garantissant une haute disponibilité.
 
+#no-numbering()
 ==== Sécurité #g("docker")
 
 L'utilisation de #g("docker") suit les meilleures pratiques de sécurité, notamment l'utilisation d'images de base minimalistes et vérifiées, la gestion des secrets en dehors des images, et potentiellement l'analyse des images pour détecter des vulnérabilités connues.
 
+#no-numbering()
 ==== Onboarding et documentation
 
 L'intégration des nouveaux membres est une priorité. Le mentorat par des membres plus expérimentés de l'équipe est une pratique courante. La culture du partage de connaissances est également encouragée, notamment via le blog technique de l'entreprise qui sert de documentation sur les choix d'architecture et les défis techniques rencontrés.
 
+#no-numbering()
 ==== Communication et collaboration
 
 La communication est fluide et directe grâce à la hiérarchie aplatie. Les équipes cross-fonctionnelles travaillent en étroite collaboration au quotidien. Les outils de messagerie instantanée et de gestion de projet viennent supporter ces échanges.
@@ -232,29 +460,21 @@ L'environnement de travail chez Affluences est celui d'une #g("scaleup") technol
 
 == Optimisation de requête
 
+#no-numbering()
 === Contexte et problématique
 
 La requête #g("graphql") `getAttendanceStatsForAPeriod` présentait des problèmes de performance critiques pour les plages de dates supérieures à un mois. Les requêtes prenaient plus de 90 secondes pour des périodes de 30 jours et crashaient complètement pour des requêtes sur une année entière.
 
-#my-block(
-    body-style: (
-        size: .9em,
-        weight: "regular",
-    ),
-    content-align: left,
-    title: "Symptômes observés :",
-    title-style: (
-        size: 1em,
-        weight: "bold",
-    ),
-    width: 100%,
-)[
-  - Requête 30 jours : *90+ secondes*
-  - Requête 1 an : *Timeout* (crash complet)
-  - Dégradation exponentielle avec l'augmentation de la période
-  - Impact négatif sur l'expérience utilisateur des dashboards
-]
+#no-numbering()
+==== Symptômes observés:
 
+- Requêtes sur 30 jours : *90+ secondes*
+- Requête sur 1 an : *Timeout* (crash complet)
+- Dégradation exponentielle avec l'augmentation de la période
+- Impact négatif sur l'expérience utilisateur des dashboards
+
+
+#no-numbering()
 === Analyse technique de la cause racine
 
 Le problème résidait dans l'architecture des requêtes du `AttendanceStatsRepository`, qui filtraient les données par `site_id` en utilisant l'extraction #g("json") :
@@ -267,14 +487,13 @@ Le problème résidait dans l'architecture des requêtes du `AttendanceStatsRepo
     ```
 )
 
-#definition(title: "Limitations de l'approche initiale")[
-  - Impossibilité d'utiliser l'index de clé primaire `(measuring_set_id, record_datetime_utc)`
-  - Nécessité d'un parcours complet de la table (*full table scan*)
-  - Parsing #g("json") pour chaque ligne de la table
-  - Performance dégradant de manière exponentielle avec la taille de la période
-]
+#no-numbering()
+==== Limitations de l'approche initiale
 
-#pagebreak()
+- Impossibilité d'utiliser l'index de clé primaire `(measuring_set_id, record_datetime_utc)`
+- Nécessité d'un parcours complet de la table (*full table scan*)
+- Parsing #g("json") pour chaque ligne de la table
+- Performance dégradant de manière exponentielle avec la taille de la période
 
 === Solution architecturale
 
@@ -292,21 +511,23 @@ L'optimisation a consisté à inverser la stratégie de requêtage pour exploite
   `site_id -> [Appel API] -> measuring_set_ids -> [Requete indexee] -> Resultats`
 ]
 
+#pagebreak()
+
 Au lieu de requêter directement par `site_id` (stocké dans un champ #g("json")), la solution procède en deux étapes :
 
 1. *Récupération des measuring set IDs* via le `SensorsInternalHttpRepository`
 2. *Requête par `measuring_set_id`* (colonne indexée) au lieu de `site_id` (champ #g("json"))
 
-Cette approche ajoute un appel #g("api") léger (~10-20ms) mais transforme la requête base de données de O(n) en O(log n).
+Cette approche ajoute un appel #g("api") léger (~10-20ms) mais transforme la requête base de données de $O(n)$ en $O(log n)$.
 
 === Modifications techniques implémentées
 
+#no-numbering()
 ==== Refactoring du contrôleur
 
 Le `AttendanceStatsController` a été rendu injectable avec #g("di", mode: "long") :
 
 #code(
-    lang: "typescript",
     ```typescript
     @injectable()
     export class AttendanceStatsController {
@@ -323,6 +544,7 @@ Le `AttendanceStatsController` a été rendu injectable avec #g("di", mode: "lon
     ```
 )
 
+#no-numbering()
 ==== Optimisation des requêtes repository
 
 Les signatures de méthodes ont été modifiées pour accepter des `measuring_set_ids` :
@@ -354,6 +576,9 @@ Les requêtes SQL ont été optimisées pour exploiter l'index :
   - Binding TypeORM d'arrays avec la syntaxe `:...array` pour les clauses `IN`
 ]
 
+#pagebreak()
+
+#no-numbering()
 ==== Injection de dépendances
 
 Le pattern d'#g("di") a été correctement implémenté dans le conteneur #g("ioc") :
@@ -375,6 +600,7 @@ Le pattern d'#g("di") a été correctement implémenté dans le conteneur #g("io
 
 Cette approche améliore la testabilité et suit les patterns architecturaux existants du projet.
 
+#no-numbering()
 === Résultats et impact
 
 #my-block(
@@ -392,8 +618,10 @@ Cette approche améliore la testabilité et suit les patterns architecturaux exi
   )
 ]
 
+#no-numbering()
 === Explication des optimisations clés
 
+#no-numbering()
 ==== Exploitation de l'index composite
 
 L'index de clé primaire `(measuring_set_id, record_datetime_utc)` est désormais pleinement exploité :
@@ -404,12 +632,14 @@ L'index de clé primaire `(measuring_set_id, record_datetime_utc)` est désormai
   - MySQL peut ignorer complètement les données non pertinentes
 ]
 
+#no-numbering()
 ==== Trade-off et analyse coût-bénéfice
 
 - *Coût ajouté* : 1 appel #g("api") pour récupérer les measuring set IDs (~10-20 ms)
 - *Coût économisé* : Élimination du scan complet avec parsing #g("json") (90+ secondes)
-- *Gain net* : Amélioration de performance de x2 250
+- *Gain net* : Amélioration de performance de `x2 250`
 
+#no-numbering()
 === Impact en production
 
 Cette optimisation a permis de :
@@ -419,6 +649,7 @@ Cette optimisation a permis de :
 - Éliminer les erreurs de timeout pour les requêtes multi-mois
 - Améliorer significativement l'expérience utilisateur avec des réponses instantanées
 
+#no-numbering()
 === Conformité aux patterns existants
 
 L'optimisation suit le même pattern déjà utilisé avec succès dans :
@@ -427,6 +658,7 @@ L'optimisation suit le même pattern déjà utilisé avec succès dans :
 
 La solution réutilise l'infrastructure existante (`SensorsInternalHttpRepository`) et respecte le pattern repository utilisé dans l'ensemble du codebase.
 
+#no-numbering()
 === Enseignements techniques
 
 #my-block(
@@ -442,7 +674,8 @@ La solution réutilise l'infrastructure existante (`SensorsInternalHttpRepositor
 
 #my-block(
     content-align: left,
-    title: "Concepts techniques approfondis"
+    title: "Concepts techniques approfondis",
+    width: 100%
 )[
   - *Index composites* : Compréhension du fonctionnement de `(measuring_set_id, record_datetime_utc)`
   - *TypeORM array binding* : Syntaxe `:...array` pour les clauses `IN`
@@ -450,17 +683,195 @@ La solution réutilise l'infrastructure existante (`SensorsInternalHttpRepositor
   - *#g("di")* : Patterns #g("ioc") pour améliorer testabilité et maintenabilité
 ]
 
-#example(title: "Fichiers modifiés")[
-  - `app/controllers/attendance-stats/AttendanceStatsController.ts` — Ajout #g("di") et résolution measuring sets
-  - `app/repositories/AttendanceStatsRepository.ts` — Optimisation requêtes avec colonnes indexées
-  - `app/resolvers/AttendanceStatsResolver.ts` — Injection contrôleur au lieu d'appels statiques
-  - `app/app.module.ts` — Enregistrement du contrôleur dans le conteneur #g("ioc")
-]
-
 *Date de réalisation* : Octobre 2025 \
 *Statut* : [OK] Deployé en production et valide avec du trafic reel
 
-#pagebreak()
+#page
+== Création du `app-service`
+
+#no-numbering()
+=== Contexte et objectifs
+
+Dans le cadre de la gestion des applications mobiles Affluences, la plateforme repose sur des *millions d'appareils* enregistrés (smartphones iOS et Android).
+Ces appareils communiquent avec le backend via une clé #g("api") qui sert à les authentifier et à les autoriser. Jusqu'alors, la logique de gestion de ces appareils était dispersée dans d'autres services.
+
+J'ai eu comme objectif de créer un nouveau #g("microservice") dédié, nommé `app-service`, afin de centraliser tout ce qui touche à la gestion des appareils et des versions applicatives.
+Ce service est destiné à être consommé principalement par `app-api`.
+
+Les responsabilités attendues étaient :
+- Enregistrement d'un nouvel appareil.
+- Mise à jour des informations d'un appareil (token Firebase, dernière version, etc.).
+- Vérification de l'autorisation d'un appareil (clé #g("api") valide, liste noire).
+- Gestion de l'historique des versions de l'application.
+
+Cette première version avait pour périmètre la mise en place de la *base du projet* : connexion à la base de données, définition des entités, et exposition d'une #g("api") REST.
+
+#no-numbering()
+=== Contraintes techniques
+
+La contrainte principale était l'*échelle* : la table `psn.appareils` contient des millions de lignes. Toute décision d'architecture (indexation, pagination, requêtes) devait tenir compte de cette volumétrie.
+
+La stack choisie est *NestJS* avec *TypeORM* pour l'accès à la base *MySQL*, en suivant les conventions du projet (`@affluences/commons`). Le service expose une #g("api") REST versionnée (v1).
+
+#no-numbering()
+=== Architecture mise en place
+
+Le service suit le pattern *Clean Architecture* adopté chez Affluences, avec une séparation claire entre :
+
+- `core/` : interfaces/abstractions (contrats de repository)
+- `modules/<feature>/entities/` : entités TypeORM (mapping base de données)
+- `modules/<feature>/models/` : modèles métier et DTOs de l'#g("api")
+- `modules/<feature>/adapters/` : conversion entité ↔ modèle
+- `modules/<feature>/repositories/` : implémentation MySQL du repository
+- `modules/<feature>/services/` : logique métier
+- `modules/<feature>/controllers/` : exposition REST
+
+Deux modules ont été créés : `DevicesModule` et `AppVersionsModule`.
+
+#no-numbering()
+=== Entités et tables
+
+#no-numbering()
+==== `DeviceEntity` — table `psn.appareils`
+
+L'entité représente un appareil enregistré :
+
+#code(
+    ```typescript
+    @Entity('appareils', { schema: 'psn', database: 'psn' })
+    @Unique('cle_UNIQUE', ['apiKey'])
+    @Unique('identifieur_UNIQUE', ['identifier', 'revokedAt'])
+    export class DeviceEntity {
+        @PrimaryGeneratedColumn({ type: 'int', name: 'appareil_id' })
+        deviceId!: number;
+
+        @Column('varchar', { name: 'identifieur', nullable: false, length: 255 })
+        identifier!: string;
+
+        @Column('varchar', { name: 'cle', nullable: false, length: 255, unique: true })
+        apiKey!: string;
+
+        @Column('varchar', { name: 'operating_system', ... })
+        operatingSystem!: string;
+
+        @Column('tinyint', { name: 'blacklist', ...
+            transformer: new BoolTinyIntTransformer() })
+        blacklist!: boolean;
+
+        @Column('varchar', { name: 'firebase_token', nullable: true, length: 255 })
+        firebaseToken?: string | null;
+
+        @Column('datetime', { name: 'revoked_at', nullable: true })
+        revokedAt?: Date | null;
+
+        @Column('enum', { name: 'revoked_reason', enum: RevokedReason, nullable: true })
+        revokedReason?: RevokedReason | null;
+        // ...
+    }
+    ```
+)
+
+Deux contraintes d'unicité garantissent l'intégrité : la clé #g("api") est globalement unique, et l'identifiant d'appareil est unique parmi les appareils non révoqués (la combinaison `identifier + revokedAt` est unique, ce qui permet d'avoir plusieurs entrées historiques révoquées pour un même identifiant).
+
+#no-numbering()
+==== `AppVersionEntity` — table `psn.app_version_history`
+
+L'entité représente une version de l'application mobile :
+
+#code(
+    ```typescript
+    @Entity('app_version_history', { schema: 'psn', database: 'psn' })
+    @Unique('build_UNIQUE', ['build', 'appIdentifier'])
+    export class AppVersionEntity {
+        @PrimaryGeneratedColumn({ type: 'int', name: 'app_version_history_id' })
+        appVersionHistoryId!: number;
+
+        @Column('varchar', { name: 'app_identifier' })
+        appIdentifier!: string;
+
+        @Column('varchar', { name: 'version_identifier' })
+        versionIdentifier!: string;
+
+        @Column('double', { name: 'build', default: 0 })
+        build!: number;
+
+        @Column('bit', { name: 'expired', transformer: new BoolBitTransformer() })
+        expired!: boolean;
+
+        @Column('bit', { name: 'available', transformer: new BoolBitTransformer() })
+        available!: boolean;
+
+        @Column('bit', { name: 'beta_build', transformer: new BoolBitTransformer() })
+        betaBuild!: boolean;
+    }
+    ```
+)
+
+#no-numbering()
+=== Endpoints REST exposés
+
+#my-block(
+    content-align: left,
+    title: "Devices — /v1/devices",
+    width: 100%
+)[
+  #table(
+    columns: (auto, auto, 1fr),
+    align: (left, left, left),
+    [*Méthode*], [*Chemin*], [*Description*],
+    [`GET`],   [`/v1/devices`],            [Liste paginée avec filtres (deviceId, apiKey, identifier, isRevoked)],
+    [`GET`],   [`/v1/devices/:deviceId`],  [Récupération d'un appareil par son ID],
+    [`POST`],  [`/v1/devices`],            [Création d'un nouvel appareil],
+    [`PATCH`], [`/v1/devices/:deviceId`],  [Mise à jour partielle d'un appareil],
+  )
+]
+
+#my-block(
+    content-align: left,
+    title: "App Versions — /v1/app-versions",
+    width: 100%
+)[
+  #table(
+    columns: (auto, auto, 1fr),
+    align: (left, left, left),
+    [*Méthode*], [*Chemin*], [*Description*],
+    [`GET`], [`/v1/app-versions`], [Liste paginée des versions avec filtres (type, version, build, available)],
+  )
+]
+
+La pagination est gérée via le package partagé `@affluences/commons/pagination` qui expose un objet `Paginated<T>`.
+
+#no-numbering()
+=== Points techniques notables
+
+#no-numbering()
+==== Gestion de la révocation
+
+Un appareil peut être révoqué (banni) sans être supprimé physiquement. Les champs `revokedAt` et `revokedReason` permettent de tracer la révocation tout en conservant l'historique. La contrainte d'unicité sur `(identifier, revokedAt)` permet d'avoir plusieurs entrées pour un même identifiant physique (un téléphone réinstallant l'application), tant qu'une seule n'est pas révoquée.
+
+#no-numbering()
+==== Transformateurs de types MySQL
+
+La base de données utilise des types `TINYINT` et `BIT` pour les booléens. Des transformateurs TypeORM (`BoolTinyIntTransformer`, `BoolBitTransformer`) assurent la conversion transparente vers des `boolean` TypeScript, évitant les erreurs de type à l'échelle de millions de lignes.
+
+#no-numbering()
+==== Bootstrap et middlewares
+
+Le service est initialisé avec un ensemble de middlewares communs issus de `@affluences/commons/router` :
+- Compression des réponses
+- Parsing des vraies IPs (proxies)
+- Injection d'un identifiant de requête (`requestId`)
+- Exposition de métriques Prometheus (`/metrics`)
+
+L'*OpenTelemetry* (OTel) est initialisée *avant* l'import de NestJS, conformément aux exigences de l'instrumentation automatique.
+
+#no-numbering()
+=== Résultat
+
+Le service `app-service` a été mergé et déployé en environnement d'intégration et de staging. Il constitue le socle sur lequel les fonctionnalités de vérification d'autorisation des appareils seront construites dans les prochains tickets.
+
+*Date de réalisation* : Octobre -- Novembre 2025 \
+*Statut* : [OK] Mergé sur `main` et `staging`
 
 = Glossaire <glossaire>
 

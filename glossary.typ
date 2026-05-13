@@ -21,8 +21,8 @@
     description: "Langage de requete pour les API, permettant au client de demander exactement les donnees dont il a besoin, ni plus ni moins. Alternative moderne aux API REST traditionnelles.",
     group: "Developpement",
   ),
-  microservices: (
-    short: "Microservices",
+  microservice: (
+    short: "Microservice",
     description: "Approche de developpement ou une application est decomposee en petits services independants, chacun responsable d'une fonction specifique. Cela facilite la maintenance et permet de faire evoluer chaque partie separement.",
     group: "Developpement",
   ),
@@ -61,6 +61,18 @@
     short: "DI",
     long: "Dependency Injection",
     description: "Technique de programmation ou les dependances d'un composant lui sont fournies de l'exterieur plutot que creees en interne. Facilite les tests et la maintenance.",
+    group: "Developpement",
+  ),
+  orm: (
+    short: "ORM",
+    long: "Object-Relational Mapping",
+    description: "Technique qui fait le lien entre les objets d'un langage de programmation et les tables d'une base de donnees relationnelle. Permet de manipuler les donnees sous forme d'objets sans ecrire de SQL manuellement.",
+    group: "Developpement",
+  ),
+  dto: (
+    short: "DTO",
+    long: "Data Transfer Object",
+    description: "Objet dont le seul role est de transporter des donnees entre les couches d'une application ou entre services. Il ne contient pas de logique metier et definit le contrat de l'interface (requete ou reponse d'API).",
     group: "Developpement",
   ),
 
