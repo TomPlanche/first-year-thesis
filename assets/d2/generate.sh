@@ -23,5 +23,8 @@ d2 $FLAGS microservices_architecture.d2 microservices_architecture.$FORMAT
 # app-service ER diagram
 d2 $FLAGS app_service_er.d2 app_service_er.$FORMAT
 
+# stats-service execution flow
+d2 $FLAGS stats_service_flow.d2 stats_service_flow.$FORMAT
+
 echo "Done"
 exit 0

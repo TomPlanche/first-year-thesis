@@ -1,0 +1,10 @@
+direction: right
+
+resolver: "Résolveur GraphQL\ngetAttendanceStatsForAPeriod(siteId, from, to)"
+controller: "AttendanceStatsController\n(logique métier)"
+repo: "AttendanceStatsRepository\n(requêtes SQL)"
+db: "stats.histories" {shape: cylinder}
+
+resolver -> controller
+controller -> repo
+repo -> db

@@ -61,17 +61,17 @@
     cover: (
         title: (
             text: "Rapport d'activité: Affluences",
-            font: "PP Supply Mono",
+            font: "Monaspace Krypton",
             weight: 700
         ),
         subtitle: (
             text: "Première année d'alternance",
-            font: "PP Supply Mono",
+            font: "Monaspace Krypton",
             weight: 700
         ),
         subsubtitle: (
             text: "Maître d’apprentissage: Luis Valdez\nTuteur Enseignant: Faten Atigui",
-            font: "PP Supply Mono",
+            font: "Monaspace Krypton",
             weight: 400
         ),
         second-logo: (
@@ -544,7 +544,26 @@ Cet environnement de travail est celui d'une #g("scaleup") technologique mature,
 #no-numbering()
 === Contexte et problématique
 
-La requête #g("graphql") `getAttendanceStatsForAPeriod` présentait des problèmes de performance critiques pour les plages de dates supérieures à un mois. Les requêtes prenaient plus de 90 secondes pour des périodes de 30 jours et crashaient complètement pour des requêtes sur une année entière.
+#no-numbering()
+==== Le service `stats-service`
+
+`stats-service` est un #g("microservice") dédié à l'agrégation de données statistiques pour la plateforme Affluences. Il expose une #g("api") #g("graphql") construite avec *GraphQL Yoga* et *Type-GraphQL*, et interroge une base MySQL distincte (`stats`) contenant l'historique des mesures de capteurs. Son rôle est de fournir aux tableaux de bord les métriques d'affluence en temps réel et sur des périodes passées : occupations, temps d'attente, entrées et sorties.
+
+La table centrale est `stats.histories`, dont la clé primaire composite est `(measuring_set_id, record_datetime_utc)`. Chaque ligne représente un relevé horodaté pour un ensemble de capteurs (*measuring set*), et stocke ses valeurs dans une colonne #g("json") `data_points` (champs `occupancy`, `waiting_time`, `entries`, `exits`, etc.). Un *measuring set* regroupe les capteurs associés à un site donné ; la relation `site_id -> measuring_set_id` est gérée par le service `sensors-service`.
+
+#no-numbering()
+==== La requête `getAttendanceStatsForAPeriod`
+
+La requête #g("graphql") `getAttendanceStatsForAPeriod` prend en entrée un `siteId` et une plage temporelle (`fromDatetimeUtc`, `toDatetimeUtc`), et retourne les valeurs minimales et maximales d'occupation et de temps d'attente pour cette période. Elle alimente directement les graphiques de synthèse des dashboards clients.
+
+Le flux d'exécution suit la chaîne suivante :
+
+#figure(
+    image("./assets/d2/stats_service_flow.png", width: 100%),
+    caption: [Chaîne d'exécution de `getAttendanceStatsForAPeriod`]
+)
+
+Cette requête présentait des problèmes de performance critiques pour les plages de dates supérieures à un mois. Les requêtes prenaient plus de 90 secondes pour des périodes de 30 jours et crashaient complètement pour des requêtes sur une année entière.
 
 #no-numbering()
 ==== Symptômes observés:
@@ -572,11 +591,9 @@ Le problème résidait dans l'architecture des requêtes du `AttendanceStatsRepo
 ==== Limitations de l'approche initiale
 
 - Impossibilité d'utiliser l'index de clé primaire `(measuring_set_id, record_datetime_utc)`
-- Nécessité d'un parcours complet de la table (*full table scan*)
+- Nécessité d'un parcours complet de la table (#g("fulltablescan"))
 - Parsing #g("json") pour chaque ligne de la table
 - Performance dégradant de manière exponentielle avec la taille de la période
-
-#pagebreak()
 
 === Solution architecturale
 
@@ -605,7 +622,15 @@ Cette approche ajoute un appel #g("api") léger (~10-20ms) mais transforme la re
 #no-numbering()
 ==== Refactoring du contrôleur
 
-Le `AttendanceStatsController` a été rendu injectable avec #g("di", mode: "long") :
+Avant ce refactoring, `AttendanceStatsController` était une classe ordinaire sans décorateur, instanciée manuellement à l'intérieur du resolver. Cela impliquait que la `SensorsInternalRepository` devait être construite ou passée explicitement à chaque point d'usage, sans aucune gestion du cycle de vie.
+
+Le passage à un composant géré par le conteneur #g("ioc") *Inversify* s'effectue en trois temps :
+
+1. Le décorateur `@injectable()` signale au conteneur que la classe peut être instanciée et câblée automatiquement.
+2. Les dépendances (ici `SensorsInternalRepository`) sont déclarées en paramètre de constructeur ; Inversify les résout seul au démarrage.
+3. L'enregistrement `inSingletonScope()` dans `app.module.ts` garantit une unique instance partagée pour toute la durée de vie du service, évitant de recréer le client HTTP à chaque requête.
+
+// #pagebreak()
 
 #code(
     ```typescript
@@ -616,8 +641,8 @@ Le `AttendanceStatsController` a été rendu injectable avec #g("di", mode: "lon
         private async getMeasuringSetIdsForSite(siteId: number): Promise<string[]> {
             const measuringSets = await this.sensorsRepository.getMeasuringSets({
                 siteIds: [siteId],
-                typeIn: ['IN_OUT_OCCUPANCY', 'ENTITY_COUNT_OCCUPANCY', 'WAITING_TIME'],
             });
+
             return measuringSets.map(ms => ms.measuringSetId);
         }
     }
@@ -649,19 +674,19 @@ Les requêtes SQL ont été optimisées pour exploiter l'index :
     ```
 )
 
-#example(title: "Améliorations techniques")[
-  - Utilisation de l'index de clé primaire
-  - Remplacement de `JSON_EXTRACT()` par l'opérateur `->` (plus lisible)
-  - Ajout de vérifications de nullité pour les tableaux vides
-  - Binding TypeORM d'arrays avec la syntaxe `:...array` pour les clauses `IN`
-]
+#no-numbering()
+===== Améliorations techniques
 
-#pagebreak()
+- Utilisation de l'index de clé primaire
+- Remplacement de `JSON_EXTRACT()` par l'opérateur `->` (plus lisible)
+- Ajout de vérifications de nullité pour les tableaux vides
+- Binding TypeORM d'arrays avec la syntaxe `:...array` pour les clauses `IN`
+
 
 #no-numbering()
 ==== Injection de dépendances
 
-Le pattern d'#g("di") a été correctement implémenté dans le conteneur #g("ioc") :
+L'enregistrement dans le conteneur et le câblage avec le resolver sont symétriques :
 
 #code(
     ```typescript
@@ -678,25 +703,24 @@ Le pattern d'#g("di") a été correctement implémenté dans le conteneur #g("io
     ```
 )
 
-Cette approche améliore la testabilité et suit les patterns architecturaux existants du projet.
+Le resolver déclare simplement avoir besoin d'un `AttendanceStatsController` ; le conteneur se charge de lui fournir l'instance singleton déjà câblée avec sa `SensorsInternalRepository`. Aucune des deux classes ne sait comment l'autre est construite.
+
+Ce découplage présente un avantage concret pour les tests unitaires : il suffit de lier `SensorsInternalRepository` à une implémentation fictive dans le conteneur de test pour isoler entièrement la logique du controller, sans modifier une ligne de code de production.
 
 #no-numbering()
 === Résultats et impact
 
-#my-block(
-    content-align: left,
-    title: "Gains de performance mesurés"
-)[
-  #table(
-    columns: (auto, auto, auto, auto),
-    align: (left, right, right, left),
-    [*Métrique*], [*Avant*], [*Après*], [*Amélioration*],
-    [Requête sur 30 jours], [90+ secondes], [40 ms], [×2 250],
-    [Requête sur 1 an], [Crash (timeout)], [220 ms], [∞ → 220 ms],
-    [Opération DB], [Full table scan], [Index seek], [-],
-    [Comportement], [Dégradation exp.], [Performance linéaire], [-],
-  )
-]
+- Gains de performance mesurés
+
+#table(
+  columns: (1fr, 1fr, 1fr, 1fr),
+  align: (left, right, right, center),
+  [*Métrique*], [*Avant*], [*Après*], [*Amélioration*],
+  [Requête sur 30 jours], [90+ secondes], [40 ms], [×2 250],
+  [Requête sur 1 an], [Crash (timeout)], [220 ms], [∞],
+  [Opération DB], [#g("fulltablescan")], [#g("indexseek")], [-],
+  [Comportement], [Dégradation exp.], [Performance linéaire], [-],
+)
 
 #no-numbering()
 === Explication des optimisations clés
@@ -704,20 +728,41 @@ Cette approche améliore la testabilité et suit les patterns architecturaux exi
 #no-numbering()
 ==== Exploitation de l'index composite
 
-L'index de clé primaire `(measuring_set_id, record_datetime_utc)` est désormais pleinement exploité :
+La table `stats.histories` possède une clé primaire composite `(measuring_set_id, record_datetime_utc)`. En base de données relationnelle, une clé primaire est automatiquement indexée via un #g("btree", mode: "both"). Cet index peut être vu comme un annuaire trié : chercher une entrée revient à naviguer dans l'arbre plutôt qu'à feuilleter toutes les pages. La complexité passe de $O(n)$ (lire toutes les lignes) à $O(log n)$ (descendre l'arbre).
 
-#definition(title: "Stratégie d'indexation")[
-  - `measuring_set_id IN (...)` restreint aux partitions pertinentes
-  - `record_datetime_utc BETWEEN` utilise la seconde partie de l'index composite
-  - MySQL peut ignorer complètement les données non pertinentes
+Pour qu'un index composite soit utilisé, la requête doit filtrer en commençant par la *première colonne* de l'index. Ici, `measuring_set_id IN (...)` satisfait cette condition : MySQL identifie directement les feuilles de l'arbre correspondant aux measuring sets demandés. La clause `record_datetime_utc BETWEEN` exploite ensuite la *seconde colonne* pour affiner la plage temporelle à l'intérieur de chaque partition de measuring set.
+
+Le problème de la requête d'origine était précisément que `JSON_EXTRACT(h.contextual_data, "$.site_id")` n'est pas une colonne, mais une expression calculée. MySQL ne peut pas indexer une expression dynamique sans colonne générée explicite, et doit donc évaluer cette extraction pour *chaque ligne de la table* avant de filtrer : c'est le #g("fulltablescan").
+
+#definition(title: [#g("fulltablescan") vs #g("indexseek")])[
+  - *#g("fulltablescan")* : MySQL lit séquentiellement toutes les pages disque de la table pour trouver les lignes correspondantes. Sur une table de plusieurs millions de lignes, cela représente des gigaoctets de lecture, indépendamment du nombre de résultats attendus.
+  - *#g("indexseek")* : MySQL descend le #g("btree") de l'index et accède directement aux pages pertinentes. Seules les données nécessaires sont lues. Le coût est proportionnel au nombre de résultats, pas à la taille totale de la table.
 ]
 
 #no-numbering()
 ==== Trade-off et analyse coût-bénéfice
 
-- *Coût ajouté* : 1 appel #g("api") pour récupérer les measuring set IDs (~10-20 ms)
-- *Coût économisé* : Élimination du scan complet avec parsing #g("json") (90+ secondes)
-- *Gain net* : Amélioration de performance de `x2 250`
+La stratégie en deux étapes introduit un appel reseau supplementaire, ce qui peut sembler contre-intuitif. L'analyse chiffree justifie ce choix :
+
+#my-block(
+    content-align: left,
+    title: "Analyse coût-bénéfice",
+    width: 100%
+)[
+  #table(
+    columns: (2fr, 1fr, 1fr),
+    align: (left, right, right),
+    [*Operation*], [*Avant*], [*Après*],
+    [Appel HTTP `getMeasuringSets`], [absent], [~10-20 ms],
+    [Requête SQL (30 jours)], [90+ secondes], [~20-30 ms],
+    [Requête SQL (1 an)], [timeout], [~200 ms],
+    [*Total (1 an)*], [*crash*], [*~220 ms*],
+  )
+]
+
+L'appel HTTP vers `sensors-service` retourne une liste de quelques dizaines d'identifiants : la reponse est petite, le service est interne au reseau prive, et la latence est negligeable au regard des 90 secondes economisees. C'est un cout fixe et previsible, independant de la periode interrogee.
+
+A l'inverse, le parsing JSON ligne par ligne croissait lineairement avec le volume de donnees : plus la periode etait longue, plus la table etait parcourue en entier, et plus le temps d'execution explosait. Pour une requete annuelle, la table entiere devait etre lue, parsee et filtree, saturant a la fois le CPU du serveur MySQL et ses I/O disque.
 
 #no-numbering()
 === Impact en production
@@ -741,27 +786,23 @@ La solution réutilise l'infrastructure existante (`SensorsInternalHttpRepositor
 #no-numbering()
 === Enseignements techniques
 
-#my-block(
-    content-align: left,
-    title: "Leçons clés"
-)[
-  1. *Conscience des index* : Toujours concevoir les requêtes autour des index disponibles
-  2. *Prudence avec les colonnes #g("json")* : Le filtrage sur des champs #g("json") empêche l'utilisation d'index
-  3. *Requêtes en deux étapes* : Ajouter une étape de lookup légère peut être plus rapide qu'une requête unique non optimisée
-  4. *Mesurer systématiquement* : L'amélioration de x2 250 a été validée par des mesures en production réelle
-  5. *Suivre les patterns existants* : La solution réutilise l'architecture établie du projet
-]
+#no-numbering()
+==== Leçons clés
 
-#my-block(
-    content-align: left,
-    title: "Concepts techniques approfondis",
-    width: 100%
-)[
-  - *Index composites* : Compréhension du fonctionnement de `(measuring_set_id, record_datetime_utc)`
-  - *TypeORM array binding* : Syntaxe `:...array` pour les clauses `IN`
-  - *Opérateurs #g("json") MySQL* : Utilisation de `->` au lieu de `JSON_EXTRACT()`
-  - *#g("di")* : Patterns #g("ioc") pour améliorer testabilité et maintenabilité
-]
+1. *Conscience des index* : Toujours concevoir les requêtes autour des index disponibles
+2. *Prudence avec les colonnes #g("json")* : Le filtrage sur des champs #g("json") empêche l'utilisation d'index
+3. *Requêtes en deux étapes* : Ajouter une étape de lookup légère peut être plus rapide qu'une requête unique non optimisée
+4. *Mesurer systématiquement* : L'amélioration de `x2 250` a été validée par des mesures en production réelle
+5. *Suivre les patterns existants* : La solution réutilise l'architecture établie du projet
+
+#no-numbering()
+==== Concepts techniques approfondis
+
+- *Index composites* : Compréhension du fonctionnement de `(measuring_set_id, record_datetime_utc)`
+- *TypeORM array binding* : Syntaxe `:...array` pour les clauses `IN`
+- *Opérateurs #g("json") MySQL* : Utilisation de `->` au lieu de `JSON_EXTRACT()`
+- *#g("di")* : Patterns #g("ioc") pour améliorer testabilité et maintenabilité
+
 
 *Date de réalisation* : Octobre 2025 \
 *Statut* : [OK] Deployé en production et valide avec du trafic reel
@@ -812,7 +853,7 @@ Deux modules ont été créés : `DevicesModule` et `AppVersionsModule`.
 === Entités et tables
 
 #no-numbering()
-==== `DeviceEntity` — table `psn.appareils`
+==== `DeviceEntity` : table `psn.appareils`
 
 L'entité représente un appareil enregistré :
 
@@ -854,7 +895,7 @@ L'entité représente un appareil enregistré :
 Deux contraintes d'unicité garantissent l'intégrité : la clé #g("api") est globalement unique, et l'identifiant d'appareil est unique parmi les appareils non révoqués (la combinaison `identifier + revokedAt` est unique, ce qui permet d'avoir plusieurs entrées historiques révoquées pour un même identifiant).
 
 #no-numbering()
-==== `AppVersionEntity` — table `psn.app_version_history`
+==== `AppVersionEntity` : table `psn.app_version_history`
 
 L'entité représente une version de l'application mobile :
 
@@ -895,12 +936,9 @@ L'entité représente une version de l'application mobile :
 #no-numbering()
 === Endpoints REST exposés
 
-#my-block(
-    content-align: left,
-    title: "Devices — /v1/devices",
-    width: 100%
-)[
-  #table(
+- Devices : `/v1/devices`
+
+#table(
     columns: (auto, auto, 1fr),
     align: (left, left, left),
     [*Méthode*], [*Chemin*], [*Description*],
@@ -908,21 +946,16 @@ L'entité représente une version de l'application mobile :
     [`GET`],   [`/v1/devices/:deviceId`],  [Récupération d'un appareil par son ID],
     [`POST`],  [`/v1/devices`],            [Création d'un nouvel appareil],
     [`PATCH`], [`/v1/devices/:deviceId`],  [Mise à jour partielle d'un appareil],
-  )
-]
+)
 
-#my-block(
-    content-align: left,
-    title: "App Versions — /v1/app-versions",
-    width: 100%
-)[
-  #table(
+- App Versions : `/v1/app-versions`
+
+#table(
     columns: (auto, auto, 1fr),
     align: (left, left, left),
     [*Méthode*], [*Chemin*], [*Description*],
     [`GET`], [`/v1/app-versions`], [Liste paginée des versions avec filtres (type, version, build, available)],
-  )
-]
+)
 
 La pagination est gérée via le package partagé `@affluences/commons/pagination` qui expose un objet `Paginated<T>`.
 
@@ -1091,13 +1124,13 @@ Le package est conçu de façon modulaire, avec une séparation claire entre la 
   - *Blocs de code enrichis* (`#code()`) : coloration syntaxique, numérotation des lignes, étiquette de fichier ou de langage.
   - *Environnements mathématiques* : `#definition()`, `#example()`, `#theorem()` avec styles distincts.
   - *Blocs de contenu* : `#my-block()`, `#blockquote()` pour les encadrés et citations.
-  - *Plan personnalisable* : le paramètre `outline-code` accepte n'importe quel contenu Typst -- ce mémoire injecte ainsi l'arbre ASCII défini dans `custom-outline.typ`.
+  - *Plan personnalisable* : le paramètre `outline-code` accepte n'importe quel contenu Typst ; ce mémoire injecte ainsi l'arbre ASCII défini dans `custom-outline.typ`.
   - *Gestion typographique avancée* : polices distinctes pour le corps, les titres et le code, mise en évidence automatique de mots-clés avec la couleur principale.
 ]
 
 === Usage au quotidien et adoption par les camarades
 
-Le package est utilisé pour l'ensemble de mes prises de notes et rapports de cours au CNAM. Sa cohérence visuelle et sa facilité de configuration -- les paramètres couvrent polices, couleurs, dates, auteur et mise en page en un seul bloc `#show: clean-cnam-template.with(...)` -- ont conduit plusieurs camarades de promotion à l'adopter pour leurs propres documents.
+Le package est utilisé pour l'ensemble de mes prises de notes et rapports de cours au CNAM. Sa cohérence visuelle et sa facilité de configuration (les paramètres couvrent polices, couleurs, dates, auteur et mise en page en un seul bloc `#show: clean-cnam-template.with(...)`) ont conduit plusieurs camarades de promotion à l'adopter pour leurs propres documents.
 
 Ce mémoire constitue lui-même un cas d'usage avancé du template : la table des matières en arbre ASCII, les blocs de code avec la police *Monaspace Krypton*, les schémas D2 intégrés comme figures sont autant de personnalisations réalisées par-dessus le template de base.
 

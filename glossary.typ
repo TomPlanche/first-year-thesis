@@ -153,6 +153,22 @@
     description: "Format de donnees textuel leger et lisible, tres utilise pour echanger des informations entre applications, notamment via les API.",
     group: "Donnees",
   ),
+  btree: (
+    short: "B-Tree",
+    long: "Arbre B",
+    description: "Structure de donnees arborescente utilisee par les moteurs de bases de donnees pour organiser les index. Permet de localiser une entree en O(log n) operations plutot qu'en O(n), quelle que soit la taille de la table.",
+    group: "Donnees",
+  ),
+  fulltablescan: (
+    short: "Full table scan",
+    description: "Operation de base de donnees ou le moteur lit sequentiellement toutes les lignes d'une table pour trouver celles qui correspondent a un filtre. Tres couteuse sur les grandes tables car le cout croit lineairement avec le volume de donnees.",
+    group: "Donnees",
+  ),
+  indexseek: (
+    short: "Index seek",
+    description: "Operation de base de donnees ou le moteur utilise un index (B-Tree) pour acceder directement aux lignes pertinentes, sans lire l'ensemble de la table. Le cout est proportionnel au nombre de resultats, pas a la taille totale de la table.",
+    group: "Donnees",
+  ),
 
   // === Methodologie ===
   agile: (
