@@ -32,7 +32,7 @@
   entry: (entry, index, total) => {
     // entry.label creates the anchor for linking
     let term = if entry.long != none and entry.long != entry.short {
-      [*#entry.short* #entry.label -- #entry.long]
+      [*#entry.short* #entry.label : #entry.long]
     } else {
       [*#entry.short* #entry.label]
     }
@@ -42,6 +42,7 @@
 )
 
 #let main-color = "#0B2630"
+#let print = false
 
 #show: clean-cnam-template.with(
     author: (
@@ -54,7 +55,8 @@
     ),
     fonts: (
         default: (name: "Zed Plex Sans", weight: 400),
-        title: (name: "0xProto Nerd Font", weight: 700),
+        inline-raw: (name: "Monaspace Krypton", weight: 400),
+        title: (name: "Monaspace Krypton", weight: 700),
     ),
     cover: (
         title: (
@@ -80,14 +82,15 @@
     ),
     logo: image("./assets/cnam_logo.svg"),
     outline-code: tree-outline(
-        symbol-font: "Snap-it mono-1.6",
-        text-font: "Zed Plex Mono",
-        number-font: "Zed Plex Mono",
+        symbol-font: "Monaspace Krypton",
+        text-font: "Monaspace Krypton",
+        number-font: "Monaspace Krypton",
         text-size: 1.35em,
         max-depth: 2,
         color: main-color,
         exclude-children: ("Glossaire",),
     ),
+    print: print,
     start-date: none,
     year: 2025
 )
@@ -108,7 +111,7 @@
     }
     // Créer un lien vers le label spécifique du terme (gloss-key)
     let target-label = label("gloss-" + key)
-    link(target-label)[#text(fill: rgb("0B607E"))[#underline[#display]]#super[#text(size: 0.6em, fill: rgb("0B607E"))[G]]]
+    link(target-label)[#text(fill: rgb("0B607E"))[#if print { display } else { underline[#display] }]#super[#text(size: 0.6em, fill: rgb("0B607E"))[G]]]
   } else {
     [*#key*]
   }
@@ -203,24 +206,25 @@ Chaque service est organisé selon une arborescence de modules reproductible :
     src/
     ├── core/
     │   └── repositories/
-    │       └── device.repository.ts    # Interface IDeviceRepository
+    │       └── device.repository.ts            # Interface IDeviceRepository
     └── modules/
         └── devices/
-            ├── entities/               # Entités TypeORM (mapping BD)
+            ├── entities/                       # Entités TypeORM (mapping BD)
             │   └── device.entity.ts
-            ├── models/                 # Modèles métier internes
+            ├── models/                         # Modèles métier internes
             │   └── device.model.ts
-            ├── adapters/               # Conversion entité ↔ modèle
+            ├── adapters/                       # Conversion entité ↔ modèle
             │   └── device.adapter.ts
-            ├── repositories/           # Implémentation MySQL
+            ├── repositories/                   # Implémentation MySQL
             │   └── device-mysql.repository.ts
-            ├── services/               # Logique métier pure
+            ├── services/                       # Logique métier pure
             │   └── device.service.ts
-            └── controllers/            # Exposition REST
+            └── controllers/                    # Exposition REST
                 └── device.controller.ts
     ```,
     text-style: (
-        font: "Departure Mono",
+        // font: "Departure Mono",
+        font: "Monaspace Krypton",
         size: 8pt
     )
 )
@@ -232,20 +236,25 @@ Les interfaces de repository sont définies dans `core/`, sans aucune dépendanc
 
 #code(
     ```typescript
-    // core/repositories/device.repository.ts
     export interface IDeviceRepository {
         findById(deviceId: number): Promise<Device | null>;
         findByApiKey(apiKey: string): Promise<Device | null>;
         save(device: CreateDeviceParams): Promise<Device>;
     }
-    ```
+    ```,
+    filename: "core/repositories/device.repository.ts",
+    lang: none,
+    text-style: (
+        font: "Monaspace Krypton",
+        size: 8pt,
+        weight: 400
+    )
 )
 
 L'implémentation concrète, qui dépend de TypeORM et MySQL, vit dans `repositories/` et implémente ce contrat :
 
 #code(
     ```typescript
-    // modules/devices/repositories/device-mysql.repository.ts
     @injectable()
     export class DeviceMysqlRepository implements IDeviceRepository {
         constructor(
@@ -258,7 +267,14 @@ L'implémentation concrète, qui dépend de TypeORM et MySQL, vit dans `reposito
             return entity ? DeviceAdapter.toDomain(entity) : null;
         }
     }
-    ```
+    ```,
+    filename: "modules/devices/repositories/device-mysql.repository.ts",
+    lang: none,
+    text-style: (
+        font: "Monaspace Krypton",
+        size: 8pt,
+        weight: 400
+    )
 )
 
 Cette indirection permet de substituer l'implémentation MySQL par une implémentation en mémoire lors des tests unitaires, sans modifier une seule ligne de la logique métier.
@@ -352,29 +368,27 @@ Les déploiements sont automatisés via un pipeline de #g("cicd", mode: "both") 
 #no-numbering()
 ===== Branches de fonctionnalité
 
-Tout développement --- nouvelle fonctionnalité, correction de bug ou refactoring --- fait l'objet d'une branche dédiée créée depuis `main`. La convention de nommage suit le format `<type>/<description-courte>`, par exemple :
+Tout développement (nouvelle fonctionnalité, correction de bug ou refactoring) fait l'objet d'une branche dédiée créée depuis `main`. La convention de nommage suit le format `<type>/<description-courte>`, et inclut systématiquement le numéro de ticket ou d'epic Jira associé, par exemple :
 
 #code(
     ```text
-    feat/app-service-device-endpoint
-    fix/attendance-stats-timeout
-    chore/bump-commons-to-2.4.1
-    refactor/device-repository-abstraction
-    ```
+    feat/app-service_first-version_INT-3713
+    feat/INT-1234_app-service
+    fix/attendance-stats-timeout_INT-987
+    refactor/device-repository-abstraction_INT-1056
+    ```,
+    numbering: false
 )
+
+La présence du ticket dans le nom de branche permet aux outils d'intégration (Jira, GitLab) de lier automatiquement la branche à son ticket, et offre une visibilité immédiate sur le contexte de chaque développement sans avoir à consulter l'historique des commits.
 
 Une fois les développements terminés, une *Pull Request* est ouverte pour une revue de code par au moins un autre développeur avant fusion dans `main`. Cette pratique garantit la cohésion du code et le partage de connaissances au sein de l'équipe.
 
 #no-numbering()
 ===== Commits conventionnels
 
-Tous les commits doivent respecter la spécification *Conventional Commits*. Le format impose un type, un périmètre optionnel et une description courte :
+Tous les commits doivent respecter la spécification *Conventional Commits*. Le format impose un type, un périmètre optionnel et une description courte : `<type>(<périmètre>): <description courte>`
 
-#code(
-    ```text
-    <type>(<périmètre>): <description courte>
-    ```
-)
 
 #example(title: "Exemples de commits")[
   ```text
@@ -387,10 +401,49 @@ Tous les commits doivent respecter la spécification *Conventional Commits*. Le 
   ```
 ]
 
-Les types principaux reconnus sont `feat` (nouvelle fonctionnalité), `fix` (correction de bug), `chore` (maintenance), `refactor`, `test`, `docs` et `ci`. Une convention `BREAKING CHANGE` dans le pied de page signale les changements incompatibles et déclenche une incrémentation majeure du numéro de version.
+Les types principaux reconnus sont `feat` (nouvelle fonctionnalité), `fix` (correction de bug), `chore` (maintenance), `refactor`, `test`, `docs` et `ci`.
+
+Chaque commit référence également le ticket Jira correspondant, ajouté en fin de description avec le préfixe `#`. Le projet Jira de l'équipe *Internal Services* utilise le préfixe `INT` :
+
+#example(title: "Référencement du ticket Jira")[
+  ```text
+  feat(devices): add PATCH endpoint for partial device update #INT-1234
+  fix(attendance): resolve timeout on 30-day period queries #INT-987
+  chore(deps): bump @affluences/commons to 2.4.1 #INT-1056
+  ```
+]
+
+Cette pratique assure la traçabilité bidirectionnelle entre le code et les tickets : depuis l'historique git, on retrouve le contexte fonctionnel de chaque changement ; depuis Jira, on accède directement aux commits et aux pull requests associés.
+
+Ces règles ne reposent pas sur la bonne volonté des développeurs : elles sont *mécaniquement enforced* par un hook pre-commit via *commitlint*. Le fichier `.commitlintrc.json` à la racine du dépôt définit les contraintes :
+
+#code(
+    ```json
+    {
+        "rules": {
+            "scope-empty": [2, "never"],
+            "type-enum": [2, "always", [
+                "feat", "fix", "docs", "refactor",
+                "test", "revert", "quality", "chore", "init"
+            ]],
+            "subject-case": [0]
+        },
+        "parserPreset": {
+            "parserOpts": {
+                "headerPattern": "^(\\w*)(?:\\(([^)]*)\\))?:\\s(.*)\\s([A-Z]+-[0-9]+)$",
+                "headerCorrespondence": ["type", "scope", "subject", "ticket"]
+            }
+        }
+    }
+    ```,
+    text-style: (font: "Monaspace Krypton", size: 8pt)
+)
+
+La `headerPattern` est la pièce centrale : elle valide que chaque message respecte le format `<type>(<scope>): <description> <TICKET-ID>`, et extrait les quatre composants (`type`, `scope`, `subject`, `ticket`) pour les outils en aval. Un commit sans scope ou sans référence de ticket est *rejeté* avant même d'être créé.
 
 Cette convention rend l'historique git directement lisible et sert de base à la génération automatique des changelogs lors des publications.
 
+#pagebreak()
 #no-numbering()
 ===== Branches de release et publication avec release-it
 
@@ -401,11 +454,11 @@ Le processus de publication s'appuie sur des *branches de release* dédiées, no
     title: "Phases de publication d'une version",
     width: 100%
 )[
-  *Phase 1 --- Release Candidate :*
+  *Phase 1 : Release Candidate*
 
-  Une première version candidate est générée depuis la branche de release (`1.2.3-rc.1`). *release-it* met à jour les fichiers `package.json`, génère un `CHANGELOG` partiel depuis les commits conventionnels et crée le tag git `v1.2.3-rc.1`. Cette RC est déployée en environnement de staging pour validation fonctionnelle.
+  Une première version candidate est générée depuis la branche de release (`1.2.3-rc.0`). *release-it* met à jour les fichiers `package.json`, génère un `CHANGELOG` partiel depuis les commits conventionnels et crée le tag git `v1.2.3-rc.0`. Cette RC est déployée en environnement de staging pour validation fonctionnelle.
 
-  *Phase 2 --- Release définitive :*
+  *Phase 2 : Release définitive*
 
   Après validation, la version finale `1.2.3` est publiée. *release-it* génère le `CHANGELOG` complet, crée le tag `v1.2.3`, publie le package sur le registry npm interne de la société, puis la branche `release/1.2.3` est fusionnée dans `main`.
 ]
@@ -432,7 +485,7 @@ Ce processus garantit une traçabilité complète des livraisons : chaque versio
 #no-numbering()
 ==== Méthodologie de développement
 
-L'entreprise a adopté une approche de développement #g("agile") rythmée par des #g("sprint", mode: "pl") d'une semaine. Bien qu'un framework spécifique comme #g("scrum") ne soit pas formellement appliqué dans toute sa rigueur, l'organisation du travail s'articule autour de cycles de développement itératifs et de rituels hebdomadaires bien établis.
+L'entreprise a adopté une approche de développement #g("agile") rythmée par des #g("sprint", mode: "pl") de deux semaines. Bien qu'un framework spécifique comme #g("scrum") ne soit pas formellement appliqué dans toute sa rigueur, l'organisation du travail s'articule autour de cycles de développement itératifs et de rituels hebdomadaires bien établis.
 
 Parmi ces rituels, on retrouve :
 - Le `suivi-services`, qui se tient chaque lundi à 10h30. Cette réunion permet à chaque membre de l'équipe de partager ses avancées et les points de blocage éventuels.
@@ -640,8 +693,8 @@ Cette approche améliore la testabilité et suit les patterns architecturaux exi
     [*Métrique*], [*Avant*], [*Après*], [*Amélioration*],
     [Requête sur 30 jours], [90+ secondes], [40 ms], [×2 250],
     [Requête sur 1 an], [Crash (timeout)], [220 ms], [∞ → 220 ms],
-    [Opération DB], [Full table scan], [Index seek], [—],
-    [Comportement], [Dégradation exp.], [Performance linéaire], [—],
+    [Opération DB], [Full table scan], [Index seek], [-],
+    [Comportement], [Dégradation exp.], [Performance linéaire], [-],
   )
 ]
 
@@ -713,7 +766,7 @@ La solution réutilise l'infrastructure existante (`SensorsInternalHttpRepositor
 *Date de réalisation* : Octobre 2025 \
 *Statut* : [OK] Deployé en production et valide avec du trafic reel
 
-#page
+#pagebreak()
 == Création du `app-service`
 
 #no-numbering()
@@ -902,8 +955,151 @@ L'*OpenTelemetry* (OTel) est initialisée *avant* l'import de NestJS, conformém
 
 Le service `app-service` a été mergé et déployé en environnement d'intégration et de staging. Il constitue le socle sur lequel les fonctionnalités de vérification d'autorisation des appareils seront construites dans les prochains tickets.
 
-*Date de réalisation* : Octobre -- Novembre 2025 \
-*Statut* : [OK] Mergé sur `main` et `staging`
+*Date de réalisation* : Octobre à Novembre 2025 \
+*Statut* : [OK] Mergé sur `main`, `staging` et en production
+
+= Annexes
+
+== Rona : automatiser les commits
+
+=== Présentation
+
+En parallèle de mon travail chez Affluences, j'ai développé et maintenu #link("https://github.com/rona-rs/")[Rona], un outil en ligne de commande écrit en *Rust* dont l'objectif est de rationaliser le workflow Git quotidien. Le projet est open source, publié sur #link("https://crates.io/crates/rona")[crates.io] et distribué via Homebrew.
+
+Rona a été conçu avant mon arrivée chez Affluences pour simplifier les opérations Git répétitives. Cependant, c'est l'expérience au sein de l'équipe *Internal Services* (avec ses conventions strictes de commits, ses tickets Jira et son hook *commitlint*) qui a véritablement motivé le développement de la fonctionnalité centrale : le système de champs personnalisables dans `.rona.toml`.
+
+=== Fonctionnalités principales
+
+#my-block(
+    content-align: left,
+    title: "Fonctionnalités de Rona",
+    width: 100%
+)[
+  - *Staging intelligent* (`rona -a`) : ajout de fichiers au staging avec exclusion de patterns, fonctionnel depuis n'importe quel sous-répertoire du dépôt.
+  - *Génération de message de commit* (`rona -g`) : sélection interactive du type de commit, puis ouverture de l'éditeur configuré ou saisie directe en terminal (`-i`).
+  - *Commit et push* (`rona -c -p`) : commit depuis le fichier `commit_message.md`, avec détection automatique de la signature GPG.
+  - *Synchronisation de branche* (`rona sync`) : mise à jour d'une branche depuis `main` par merge ou rebase.
+  - *Complétions shell* : support Bash, Fish, Zsh et PowerShell.
+]
+
+=== Système de configuration
+
+Rona suit une hiérarchie de configuration à deux niveaux :
+
+- `~/.config/rona.toml` : configuration globale, appliquée à tous les projets.
+- `.rona.toml` : configuration locale au projet, qui prend la priorité sur la configuration globale.
+
+La clé `template` permet de définir le format exact du message de commit via des variables (`{commit_type}`, `{message}`, `{branch_name}`, etc.) et des blocs conditionnels (`{?ticket}...{/ticket}`) pour gérer les champs optionnels.
+
+La fonctionnalité `[[extra_fields]]` permet de déclarer des champs supplémentaires affichés lors de la génération interactive. Chaque champ peut être pré-rempli automatiquement depuis la sortie d'une commande shell ou depuis le nom de la branche courante grâce à une expression régulière.
+
+=== Configuration adaptée à Affluences
+
+La partie `[[extra_fields]]` a été conçue en grande partie pour répondre aux besoins d'Affluences : extraire automatiquement le numéro de ticket `INT-XXXX` depuis le nom de la branche, et suggérer le scope depuis l'historique git récent. Le `.rona.toml` suivant produit des commits conformes au format imposé par le `.commitlintrc.json` de l'équipe :
+
+#code(
+    ```toml
+    editor = "zed"
+    commit_types = ["feat", "fix", "docs", "refactor", "test", "revert", "quality", "chore", "init"]
+
+    # Produit: feat(devices): add PATCH endpoint #INT-1234
+    template = "{commit_type}{?scope}({scope}){/scope}: {message}{?ticket} #{ticket}{/ticket}"
+
+    field_order = ["scope", "message", "ticket"]
+
+    # Scope suggéré depuis les 20 derniers commits
+    [[extra_fields]]
+    name = "scope"
+    prompt = "Scope"
+    kind = "select"
+    required = true
+    prefetch.source = "command"
+    prefetch.command = "git log -20 --pretty=format:%s"
+    prefetch.extract_regex = "\\w+\\((?P<value>[^)]*)\\):"
+    prefetch.deduplicate = true
+
+    # Ticket extrait automatiquement du nom de branche (ex: feat/INT-1234_app-service)
+    [[extra_fields]]
+    name = "ticket"
+    prompt = "Ticket Jira"
+    kind = "text"
+    required = false
+    validation = "^[A-Z]+-[0-9]+$"
+    prefetch.source = "branch"
+    prefetch.extract_regex = "[A-Z]+-[0-9]+"
+    ```,
+    text-style: (font: "Monaspace Krypton", size: 7.5pt)
+)
+
+Sur une branche nommée `feat/app-service_first-version_INT-3713`, une session `rona -g -i` se déroule ainsi :
+
+#code(
+    ```text
+    $ Select commit type
+    > feat
+
+    $ Scope
+    > devices
+      app-versions
+      (none)
+      Other (enter manually)
+
+    $ Message
+    > add PATCH endpoint for partial device update
+
+    $ Ticket Jira (INT-3713)
+    > INT-3713
+    ```
+)
+
+Ce qui produit directement :
+
+#code(
+    ```text
+    feat(devices): add PATCH endpoint for partial device update #INT-3713
+    ```
+)
+
+Le message est conforme au pattern de la `headerPattern` du `.commitlintrc.json` et sera accepté par le hook pre-commit sans modification manuelle.
+
+== Rédaction avec Typst et `clean-cnam-template`
+
+=== Typst, une alternative moderne à LaTeX
+
+Ce mémoire n'a pas été rédigé avec un traitement de texte classique ni avec LaTeX, mais avec #link("https://typst.app/")[Typst], un système de composition de documents de nouvelle génération. Typst adopte une syntaxe légère et expressive, une compilation quasi-instantanée, et un système de packages communautaire, ce qui en fait une alternative pragmatique à LaTeX pour la rédaction de documents techniques et académiques.
+
+=== Un package open source dédié au CNAM
+
+Pour structurer mes documents de cours au CNAM, j'ai développé et publié le package open source *`clean-cnam-template`*, disponible dans le registre officiel de packages Typst sous l'identifiant `@preview/clean-cnam-template`. Ce mémoire lui-même l'utilise en version 1.6.7 :
+
+#code(
+    ```typst
+    #import "@preview/clean-cnam-template:1.6.7": *
+    ```,
+    text-style: (font: "Monaspace Krypton", size: 8pt)
+)
+
+Le package est conçu de façon modulaire, avec une séparation claire entre la configuration, les composants d'interface, la gestion des polices, la mise en page et les environnements mathématiques. Ses fonctionnalités principales sont :
+
+#my-block(
+    content-align: left,
+    title: "Fonctionnalités de clean-cnam-template",
+    width: 100%
+)[
+  - *Identité visuelle CNAM* : couleurs officielles, logo, en-têtes contextuels.
+  - *Page de couverture configurable* : titre, sous-titre, auteur (avec lien ORCID et mailto), logo secondaire, couleur de fond, cercles décoratifs : tout est paramétrable.
+  - *Blocs de code enrichis* (`#code()`) : coloration syntaxique, numérotation des lignes, étiquette de fichier ou de langage.
+  - *Environnements mathématiques* : `#definition()`, `#example()`, `#theorem()` avec styles distincts.
+  - *Blocs de contenu* : `#my-block()`, `#blockquote()` pour les encadrés et citations.
+  - *Plan personnalisable* : le paramètre `outline-code` accepte n'importe quel contenu Typst -- ce mémoire injecte ainsi l'arbre ASCII défini dans `custom-outline.typ`.
+  - *Gestion typographique avancée* : polices distinctes pour le corps, les titres et le code, mise en évidence automatique de mots-clés avec la couleur principale.
+]
+
+=== Usage au quotidien et adoption par les camarades
+
+Le package est utilisé pour l'ensemble de mes prises de notes et rapports de cours au CNAM. Sa cohérence visuelle et sa facilité de configuration -- les paramètres couvrent polices, couleurs, dates, auteur et mise en page en un seul bloc `#show: clean-cnam-template.with(...)` -- ont conduit plusieurs camarades de promotion à l'adopter pour leurs propres documents.
+
+Ce mémoire constitue lui-même un cas d'usage avancé du template : la table des matières en arbre ASCII, les blocs de code avec la police *Monaspace Krypton*, les schémas D2 intégrés comme figures sont autant de personnalisations réalisées par-dessus le template de base.
 
 = Glossaire <glossaire>
 
@@ -935,7 +1131,7 @@ Ce glossaire regroupe les termes techniques utilises dans ce document, classés 
           // Créer le label pour ce terme (gloss-key)
           let term-label = label("gloss-" + key)
           let term-display = if entry.at("long", default: none) != none and entry.long != entry.short {
-            [*#entry.short* -- #entry.long #term-label]
+            [*#entry.short* : #entry.long #term-label]
           } else {
             [*#entry.short* #term-label]
           }
