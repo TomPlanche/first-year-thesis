@@ -3,7 +3,7 @@
 set -e
 
 FLAGS="--layout elk --scale 1.5 --pad 20"
-FORMAT="png"
+FORMAT="svg"
 
 # data flow through layers
 d2 $FLAGS data_flow_through_layers.d2 data_flow_through_layers.$FORMAT

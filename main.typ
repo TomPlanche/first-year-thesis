@@ -61,18 +61,26 @@
     cover: (
         title: (
             text: "Rapport d'activité: Affluences",
+
+            align: left,
             font: "Monaspace Krypton",
-            weight: 700
+            weight: 700,
         ),
         subtitle: (
             text: "Première année d'alternance",
+
+            align: left,
             font: "Monaspace Krypton",
-            weight: 700
+            size: 18pt,
+            weight: 700,
         ),
         subsubtitle: (
             text: "Maître d’apprentissage: Luis Valdez\nTuteur Enseignant: Faten Atigui",
+
+            align: right,
             font: "Monaspace Krypton",
-            weight: 400
+            size: 12pt,
+            weight: 400,
         ),
         second-logo: (
             dx: 5pt,
@@ -121,6 +129,7 @@
 
 #show: init-glossary.with(my-glossary)
 
+#no-numbering()
 = Remerciements
 
 Avant de commencer la lecture de ce mémoire, je tiens à adresser mes sincères remerciements aux personnes qui ont contribué au bon déroulement de mon année d'alternance et à la réalisation de ce document.
@@ -131,8 +140,9 @@ Mes remerciements s'adressent tout particulièrement à mon maître d'apprentiss
 
 Je remercie également Micaël Pais Novo, CTO, pour sa disponibilité et la confiance qu'il m'a témoignée, me permettant de travailler en autonomie tout en sachant que je pouvais compter sur son aide.
 
-Enfin, je souhaite exprimer ma gratitude à mes collègues pour leur aide précieuse. Merci à Jean-Charles Moussé pour son soutien sur le projet `app-api`, à Raphaël Galmiche pour son aide sur les déploiements, et à Justine Ribas pour ses éclaircissements sur `data-service`.
+Enfin, je souhaite exprimer ma gratitude à mes collègues pour leur aide précieuse. Merci à Jean-Charles Moussé pour son soutien sur le projet `app-api` et à Raphaël Galmiche pour son aide sur les déploiements.
 
+#no-numbering()
 = Introduction
 
 Ce rapport dresse le bilan de mon expérience en entreprise au cours de l'année scolaire 2025-2026.
@@ -292,7 +302,7 @@ Une distinction rigoureuse est maintenue entre trois catégories de types qui ne
 
 
 #figure(
-    image("./assets/d2/data_flow_through_layers.png"),
+    image("./assets/d2/data_flow_through_layers.svg"),
     caption: "Flux de données à travers les couches"
 )
 
@@ -475,7 +485,7 @@ Le processus de publication s'appuie sur des *branches de release* dédiées, no
 Ce processus garantit une traçabilité complète des livraisons : chaque version déployée correspond à un tag git précis, et son contenu est documenté dans le changelog généré automatiquement depuis les commits conventionnels.
 
 #figure(
-  image("./assets/d2/git_workflow.png", width: 100%),
+  image("./assets/d2/git_workflow.svg", width: 100%),
   caption: [Workflow Git : cycle de développement et de publication des versions]
 )
 
@@ -509,7 +519,7 @@ L'équipe de développement suit les conventions du #g("semver", mode: "long") p
 L'architecture #g("microservices") permet de découpler les différentes parties de la plateforme. Chaque service est responsable d'une fonctionnalité métier spécifique et peut être développé, déployé et mis à l'échelle indépendamment des autres. #g("kafka") joue un rôle crucial en permettant à ces services de communiquer de manière asynchrone et fiable.
 
 #figure(
-  image("./assets/d2/microservices_architecture.png", width: 100%),
+  image("./assets/d2/microservices_architecture.svg", width: 100%),
   caption: [Topologie des services internes et de leur communication]
 )
 
@@ -559,7 +569,7 @@ La requête #g("graphql") `getAttendanceStatsForAPeriod` prend en entrée un `si
 Le flux d'exécution suit la chaîne suivante :
 
 #figure(
-    image("./assets/d2/stats_service_flow.png", width: 100%),
+    image("./assets/d2/stats_service_flow.svg", width: 100%),
     caption: [Chaîne d'exécution de `getAttendanceStatsForAPeriod`]
 )
 
@@ -600,7 +610,7 @@ Le problème résidait dans l'architecture des requêtes du `AttendanceStatsRepo
 L'optimisation a consisté à inverser la stratégie de requêtage pour exploiter l'indexation existante de la base de données.
 
 #figure(
-  image("./assets/d2/query_plan_comparison.png", width: 100%),
+  image("./assets/d2/query_plan_comparison.svg", width: 100%),
   caption: [Comparaison des plans d'exécution avant et après l'optimisation]
 )
 
@@ -613,7 +623,7 @@ Au lieu de requêter directement par `site_id` (stocké dans un champ #g("json")
 Cette approche ajoute un appel #g("api") léger (~10-20ms) mais transforme la requête base de données de $O(n)$ en $O(log n)$.
 
 #figure(
-  image("./assets/d2/query_optimization_sequence.png", width: 90%),
+  image("./assets/d2/query_optimization_sequence.svg", width: 90%),
   caption: [Diagramme de séquence de la stratégie d'optimisation en deux étapes]
 )
 
@@ -929,7 +939,7 @@ L'entité représente une version de l'application mobile :
 )
 
 #figure(
-  image("./assets/d2/app_service_er.png", width: 85%),
+  image("./assets/d2/app_service_er.svg", width: 85%),
   caption: [Schéma des tables gérées par `app-service`]
 )
 
