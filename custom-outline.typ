@@ -1,3 +1,8 @@
+// Place this immediately before a heading to give it a shorter title in the outline.
+// Usage:  #customTitle("Short form")
+//         == The full, longer heading text
+#let customTitle(short) = [#metadata(short)<_tree-outline-custom-title>]
+
 #let tree-outline(
   symbol-font: "Courier New",
   text-font: "Courier New",
@@ -7,7 +12,7 @@
   max-depth: none,  // Maximum heading level to include (none = all levels)
   use-dots: true,  // Use dots to separate text from page numbers (if false, uses spaces)
   color: black,  // Color for the entire outline - accepts hex strings ("#0B607E"), color names ("blue"), or color values
-  exclude-children: (),  // List of heading titles (strings) whose children should not appear in the outline
+  exclude-children: (),  // List of heading titles (strings, as displayed in the outline) whose children should not appear
 ) = context {
   // Convert color parameter to proper color type
   let outline-color = if type(color) == str {
@@ -33,16 +38,48 @@
     return []
   }
 
-  // Convert content to plain text
-  let content-to-str(c) = {
-    // Layout the content and measure it to force text extraction
-    let extracted = [#c]
-    // Simple approach: just use the content directly in string context
-    // Typst will handle the conversion
-    str(c.text.body)
+  // Query custom title overrides placed via customTitle("...")
+  let custom-title-entries = query(<_tree-outline-custom-title>)
+
+  let is-strictly-before(loc-a, loc-b) = {
+    let pa = loc-a.page()
+    let pb = loc-b.page()
+    if pa < pb { true }
+    else if pa > pb { false }
+    else { loc-a.position().y < loc-b.position().y }
   }
 
-  // Actually, better approach - use a locate and capture as plain text
+  // metadata elements placed before a heading often share its exact y-position
+  // because the heading's above-space starts at the same point; use <= so they
+  // are treated as "before or at" the heading rather than after it.
+  let is-at-or-before(loc-a, loc-b) = {
+    let pa = loc-a.page()
+    let pb = loc-b.page()
+    if pa < pb { true }
+    else if pa > pb { false }
+    else { loc-a.position().y <= loc-b.position().y }
+  }
+
+  // Return the custom outline title for heading h, or none.
+  // Matches only when a customTitle call is the last element at-or-before h
+  // with no other heading strictly between them.
+  let get-heading-display(h) = {
+    let h-loc = h.location()
+    let before = custom-title-entries.filter(ct => is-at-or-before(ct.location(), h-loc))
+    if before.len() == 0 { return none }
+    let last-ct = before.last()
+    let last-ct-loc = last-ct.location()
+    // between: headings that are at-or-after the custom title AND strictly before h.
+    // Using >= on the lower bound ensures that heading h itself blocks subsequent
+    // headings from inheriting the same custom title when ct and h are co-located.
+    let between = headings.filter(other => {
+      let o-loc = other.location()
+      is-at-or-before(last-ct-loc, o-loc) and is-strictly-before(o-loc, h-loc)
+    })
+    if between.len() == 0 { last-ct.value } else { none }
+  }
+
+  // Convert content to plain text
   let content-to-str(c) = {
     if type(c) == str {
       c
@@ -59,14 +96,17 @@
 
   // Build tree structure
   let build-tree(headings) = {
-    let items = headings.enumerate().map(((i, h)) => (
-      idx: i,
-      text: h.body,
-      level: h.level,
-      page: h.location().page(),
-      location: h.location(),
-      parent: none,
-    ))
+    let items = headings.enumerate().map(((i, h)) => {
+      let custom = get-heading-display(h)
+      (
+        idx: i,
+        text: if custom != none { [#custom] } else { h.body },
+        level: h.level,
+        page: h.location().page(),
+        location: h.location(),
+        parent: none,
+      )
+    })
 
     items = items.enumerate().map(((i, item)) => {
       let parent-idx = none

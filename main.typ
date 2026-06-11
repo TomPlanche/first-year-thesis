@@ -67,7 +67,7 @@
             weight: 700,
         ),
         subtitle: (
-            text: "Première année d'alternance",
+            text: "1ère Année d’École d’Ingénieur au CNAM",
 
             align: left,
             font: "Monaspace Krypton",
@@ -1100,6 +1100,70 @@ Le service `app-service` a été mergé et déployé en environnement d'intégra
 
 *Date de réalisation* : Octobre à Novembre 2025 \
 *Statut* : [OK] Mergé sur `main`, `staging` et en production
+
+#pagebreak()
+= Conclusion
+
+Cette première année d'alternance au sein d'#link(<affluences>)[Affluences] constitue le point de départ de mon parcours d'ingénieur et ma première immersion durable dans un environnement de développement à grande échelle. Au-delà de la découverte d'une entreprise et d'une équipe, elle m'a confronté à des problématiques techniques réelles, en production, où chaque décision a un coût et un impact mesurables, là où le cadre académique reste par nature simplifié.
+
+#no-numbering()
+== Bilan des compétences acquises
+
+Sur le plan technique, les deux missions présentées dans ce rapport ont structuré mon apprentissage. L'optimisation de la requête `getAttendanceStatsForAPeriod` m'a appris à raisonner *autour des index* plutôt que sur la seule logique applicative : lecture d'un plan d'exécution via `EXPLAIN`, compréhension fine d'un index composite #g("btree"), et prise de conscience du coût réel d'un #g("fulltablescan") sur des tables de plusieurs millions de lignes. La création du `app-service`, à l'inverse, m'a confronté aux décisions d'architecture d'un service *from scratch* : découpage en #g("microservices"), choix entre REST et #g("graphql"), stratégie de révocation logique plutôt que physique. Ces deux expériences, l'une corrective et l'autre créatrice, sont complémentaires.
+
+#my-block(
+    content-align: left,
+    title: "Synthèse des compétences développées",
+    width: 100%
+)[
+  - *Savoir-faire technique* : #g("clean", mode: "short") Architecture, #g("nestjs")/#g("typescript"), TypeORM, optimisation de requêtes MySQL, #g("di") via #g("ioc").
+  - *Méthodologie* : workflow Git structuré, commits conventionnels, revue de code, intégration dans un pipeline de #g("cicd").
+  - *Savoir-être* : travail en autonomie dans une hiérarchie aplatie, identification du bon moment pour solliciter de l'aide, lecture d'un codebase existant pour en respecter les conventions.
+]
+
+Un enseignement transversal mérite d'être souligné : sur les deux missions, la meilleure solution n'était pas la plus inventive, mais celle *déjà présente dans le codebase sous une autre forme*. Apprendre à lire le code des autres avant d'écrire le mien a sans doute été l'acquis le plus structurant de l'année.
+
+#no-numbering()
+== Articulation entre la formation et l'entreprise
+
+L'enseignement qui a le plus directement résonné avec mon travail a été le cours d'optimisation de bases de données relationnelles // À PERSONNALISER : intitulé/code exact de l'UE (SGBDR – Opti BD)
+suivi cette année au CNAM. La mission d'optimisation de la requête `getAttendanceStatsForAPeriod` en a constitué une application grandeur nature, à un détail près qui change tout : là où le cours raisonne sur des tables de quelques dizaines de pages, je manipulais une table de plusieurs millions de lignes, où la moindre erreur de conception se paie en dizaines de secondes.
+
+Le cours m'a d'abord donné la *grille de lecture* du problème. Il présente le cycle de vie d'une requête SQL : le passage de l'expression algébrique au plan d'exécution, choisi par l'optimiseur pour minimiser les accès disque, l'I/O étant l'opération coûteuse. Cette idée que *le coût se compte en pages lues* est exactement ce qui se jouait dans ma requête : les 4,6 millions de lignes parcourues n'étaient pas un problème de CPU mais un problème d'accès disque, chaque ligne entraînant une lecture de page suivie d'un parsing #g("json").
+
+Surtout, le cours éclaire un point du plan `EXPLAIN` qui serait resté obscur sans lui : la colonne `filtered: 100`. La sélectivité d'un prédicat, définie comme l'inverse de la cardinalité de l'attribut, est estimée par l'optimiseur à partir de statistiques (histogrammes de fréquences). Or MySQL ne tient aucune statistique sur une expression calculée comme `JSON_EXTRACT(contextual_data, "$.site_id")` : il est donc incapable d'estimer sa sélectivité, et affiche par défaut 100 %. Ce que le cours formalise comme l'absence de statistiques exploitables, je l'ai observé concrètement comme la cause de l'aveuglement de l'optimiseur.
+
+La solution elle-même découle directement des notions vues en cours. Le passage du #g("fulltablescan") (`TABLE ACCESS FULL`, de coût proportionnel à la taille de la table, en $O(n)$) à un parcours d'index sur l'Arbre B+ de la clé primaire composite n'est rien d'autre que le choix d'opérateur que le cours apprend à privilégier. La condition d'utilisation d'un index composite (filtrer en commençant par sa première colonne) et la distinction entre `INDEX UNIQUE SCAN` (clé unique, $"Sel" = 1/||R||$) et `INDEX RANGE SCAN` (données multivaluées) m'ont permis de comprendre *pourquoi* requêter par `measuring_set_id IN (...)` réactivait l'index quand le filtre #g("json") le neutralisait.
+
+#my-block(
+    content-align: left,
+    title: "Du concept académique à la décision technique",
+    width: 100%
+)[
+  - *Coût en I/O / minimiser les accès disque* $arrow.r$ diagnostic : le goulot était la lecture de 4,6 M de pages, pas le calcul.
+  - *Sélectivité estimée par statistiques* $arrow.r$ explication du `filtered: 100` sur un champ #g("json") non indexable.
+  - *#g("fulltablescan") en $O(n)$ vs parcours d'Arbre B+* $arrow.r$ choix de la stratégie de requêtage.
+  - *Index composite et ordre des colonnes* $arrow.r$ filtrage par `measuring_set_id` puis `record_datetime_utc`.
+]
+
+Cette articulation a fonctionné dans les deux sens. Le cours m'a fourni le vocabulaire et les modèles de coût pour *nommer* et *justifier* ce que j'observais empiriquement ; réciproquement, voir ces concepts produire un gain mesurable en production // À PERSONNALISER si tu veux : "(un facteur 2 250 sur les requêtes de 30 jours)"
+leur a donné une consistance que l'exercice académique, par nature simplifié, ne permet pas d'atteindre. C'est précisément la synergie entre vécu professionnel et apport académique que vise l'alternance.
+
+#no-numbering()
+== Difficultés rencontrées et manques identifiés
+
+Je dois être honnête : à l'exception notable du cours d'optimisation de bases de données évoqué plus haut, les enseignements suivis cette année m'ont apporté peu de compétences directement mobilisables dans mon travail quotidien ou mes projets personnels et open source. Le problème ne vient pas du niveau des cours, il vient de leur éloignement des pratiques actuelles du développement logiciel.
+
+Le premier décalage tient à l'*outillage*. Une part importante de la formation s'articule autour de Java, alors que l'écosystème dans lequel j'évolue est polyglotte : #g("typescript") et #g("nodejs") au #g("backend"), Python pour la donnée, Dart pour le mobile, sans compter le Rust de mes projets personnels. Apprendre des concepts à travers un langage ne me dérange pas en soi. En revanche, ne jamais être confronté aux langages et aux outils qui dominent réellement l'industrie creuse un écart que l'alternance doit combler seule.
+
+Le second décalage concerne la *modélisation*. La place accordée à l'UML m'a paru disproportionnée au regard de son usage réel. En entreprise, on modélise (ce mémoire contient lui-même des diagrammes de séquence et entité-association), mais de façon légère et ponctuelle : un schéma esquissé pour clarifier une idée, jamais une spécification exhaustive produite en amont du développement. Les cours présentent au contraire l'UML comme un formalisme lourd et complet, déconnecté des méthodes #g("agile") itératives qui rythment le travail réel.
+
+Le troisième manque est l'absence de gros projets concrets. Mener un projet de bout en bout, de la conception à la mise en production, en passant par les choix d'architecture et les erreurs qu'on assume, reste à mes yeux le meilleur moyen d'apprendre ce métier. La formation n'en propose aucun de cette ampleur, et c'est sans doute ce qui m'a le plus manqué.
+
+Résultat : cette année, l'autodidaxie a été mon *seul* moyen de monter en compétences. Tout ce qui me sert aujourd'hui a été appris en dehors des cours, sur mon temps libre à travers des projets personnels ou directement chez Affluences. Mon outil #link("https://github.com/rona-rs/")[Rona], développé et publié en open source, l'illustre bien : c'est en le construisant que j'ai appris à concevoir une interface en ligne de commande, à distribuer des paquets et à appliquer des conventions de commits, ces mêmes conventions que j'ai ensuite retrouvées formalisées chez Affluences. L'architecture en couches, l'injection de dépendances ou la lecture d'un plan d'exécution viennent elles aussi de la pratique, pas des cours. Si le développement n'était pas une passion et que je ne comptais que sur la formation pour progresser, je ne serais aujourd'hui pas en mesure de postuler à un poste de développeur.
+
+Je n'en tire pas une conclusion amère. Savoir apprendre seul est probablement la compétence la plus déterminante de ce métier, et l'alternance lui offre un vrai terrain d'exercice. J'attends simplement de la suite de la formation qu'elle réduise cet écart : des enseignements plus proches des pratiques, des outils et des méthodologies employés dans l'industrie, et des projets d'envergure pour les ancrer.
+
 
 = Annexes
 
