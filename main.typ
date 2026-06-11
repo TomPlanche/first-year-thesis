@@ -23,7 +23,7 @@
       stroke: 0.5pt + luma(180),
       align: (left, left),
       table.header(
-        [*Terme*], [*Definition*],
+        [*Terme*], [*Définition*],
       ),
       ..body.flatten()
     )
@@ -136,7 +136,7 @@ Avant de commencer la lecture de ce mémoire, je tiens à adresser mes sincères
 
 Je souhaite tout d'abord remercier l'entreprise #affluences-link pour m'avoir accueilli. J'ai particulièrement apprécié l'environnement de travail agréable et la liberté qui m'a été accordée dans le choix de mes outils de développement, me permettant de travailler dans des conditions optimales. Je remercie également l'ensemble de mes collègues pour leur accueil et la bonne ambiance générale.
 
-Mes remerciements s'adressent tout particulièrement à mon maître d'apprentissage, Luis Valdes. Sa disponibilité constante, ses conseils avisés et son accompagnement m'ont été précieux tout au long de l'année. Son management bienveillant, alliant confiance et soutien, m'a permis de m'épanouir tant dans l'entreprise que dans mes missions.
+Mes remerciements s'adressent tout particulièrement à mon maître d'apprentissage, Luis Valdez. Sa disponibilité constante, ses conseils avisés et son accompagnement m'ont été précieux tout au long de l'année. Son management bienveillant, alliant confiance et soutien, m'a permis de m'épanouir tant dans l'entreprise que dans mes missions.
 
 Je remercie également Micaël Pais Novo, CTO, pour sa disponibilité et la confiance qu'il m'a témoignée, me permettant de travailler en autonomie tout en sachant que je pouvais compter sur son aide.
 
@@ -149,32 +149,29 @@ Ce rapport dresse le bilan de mon expérience en entreprise au cours de l'année
 Ce parcours s'inscrit dans le cadre de ma formation d'ingénieur en informatique et systèmes d'information,
 réalisée en alternance au sein de l'École d’Ingénieur du Conservatoire National des Arts et Métiers (#link("https://ecole-ingenieur.cnam.fr/", [EI-CNAM])).
 
-J'ai donc intégré en alternance l'équipe #g("backend") d'#link(<affluences>)[Affluences], une entreprise française innovante spécialisée dans
-la gestion de l'affluence et l'optimisation des flux de visiteurs.
-Cette année représentait pour moi une toute nouvelle aventure : mes premiers mois au sein de la société, une immersion complète dans un environnement professionnel exigeant et stimulant.
-J'intègre la partie *Internal Services* en tant que *développeur* #g("backend").
+J'ai intégré l'équipe *Internal Services* d'#link(<affluences>)[Affluences] en tant que développeur #g("backend"). Cette alternance, au sein d'une entreprise spécialisée dans la gestion de l'affluence et l'optimisation des flux de visiteurs, constitue une immersion complète dans un environnement professionnel exigeant et dynamique.
 
 == Affluences <affluences>
 
 #affluences-link est une entreprise française fondée en 2014, aujourd'hui leader européen de la mesure et de la prévision d'affluence en temps réel. Avec plus de *10 ans d'expertise*, sa mission est de transformer la gestion des flux de visiteurs en une expérience fluide et optimisée, tant pour les établissements que pour leurs usagers.
 
-L'entreprise affiche des résultats impressionnants : *1 800 établissements clients* répartis à travers l'Europe, une application mobile notée *4,8/5* utilisée par plus d'*un million de personnes*, et *13 millions de consultations mensuelles*. Elle a réalisé une levée de fonds de 4 millions d'euros en 2020 et compte parmi ses clients des institutions de renom comme le Musée du Louvre, la Tour Eiffel, la SNCF et l'Université de Cambridge.
+L'entreprise équipe aujourd'hui *1 800 établissements* en Europe, avec une application mobile notée *4,8/5* comptant plus d'*un million d'utilisateurs* pour *13 millions de consultations mensuelles*. Elle a réalisé une levée de fonds de 4 millions d'euros en 2020 et compte parmi ses clients des institutions de renom comme le Musée du Louvre, la Tour Eiffel, la SNCF et l'Université de Cambridge.
 
-Sa force réside dans une solution technologique complète et intégrée, qui combine des capteurs #g("iot") propriétaires pour la collecte de données, des algorithmes prédictifs pour anticiper les pics d'activité, et des plateformes de communication multi-canaux pour informer les utilisateurs en temps réel. L'entreprise déploie ses solutions sur *huit secteurs verticaux* distincts : bibliothèques et médiathèques, musées et lieux culturels, universités et smart campus, collectivités et smart cities, transports publics, espaces naturels, entreprises et smart buildings, retail et événements.
+La solution repose sur une chaîne technologique complète, allant des capteurs #g("iot") propriétaires pour la collecte de données aux algorithmes prédictifs, le tout restitué via des plateformes de communication multi-canaux. L'entreprise déploie ses solutions sur *huit secteurs verticaux* distincts : bibliothèques et médiathèques, musées et lieux culturels, universités et smart campus, collectivités et smart cities, transports publics, espaces naturels, entreprises et smart buildings, retail et événements.
 
-L'équipe technique d'une cinquantaine de collaborateurs est organisée en pôles spécialisés : *Data* (traitement des flux de données en temps réel), *Computer Vision* (algorithmes d'#g("iot", mode: "long") avec intelligence artificielle), *Infra* (infrastructure et sécurité), *Web* (interfaces utilisateur), et *Service* (#g("api", mode: "pl") et #g("microservices")). L'entreprise s'appuie sur un stack technologique moderne incluant #g("nodejs") et #g("nestjs") pour le #g("backend"), #g("kafka") pour le streaming de données, #g("airflow") et #g("argoworkflow") pour l'orchestration des workflows, #g("kubernetes") pour l'orchestration de conteneurs, et #g("datadog") pour le monitoring des applications. L'équipe a récemment adopté une architecture #g("monorepo") pour certains projets, améliorant la modularité et la maintenance. L'organisation suit une méthodologie #g("agile") avec des sprints de 2 semaines.
+L'équipe technique d'une cinquantaine de collaborateurs est organisée en pôles spécialisés : *Data* (traitement des flux de données en temps réel), *Computer Vision* (algorithmes d'#g("iot", mode: "long") avec intelligence artificielle), *Infra* (infrastructure et sécurité), *Web* (interfaces utilisateur), et *Service* (#g("api", mode: "pl") et #g("microservices")). L'entreprise s'appuie sur une stack technologique moderne incluant #g("nodejs") et #g("nestjs") pour le #g("backend"), #g("kafka") pour le streaming de données, #g("airflow") et #g("argoworkflow") pour l'orchestration des workflows, #g("kubernetes") pour l'orchestration de conteneurs, et #g("datadog") pour le monitoring des applications. L'équipe a récemment adopté une architecture #g("monorepo") pour certains projets, améliorant la modularité et la maintenance. L'organisation suit une méthodologie #g("agile") avec des sprints de 2 semaines.
 
 C'est au sein de cette #g("scaleup") innovante, qui promeut une culture d'autonomie et d'actionnariat salarié universel, que j'ai eu l'opportunité de réaliser mon alternance.
 
 = Environnement de Travail
 
-Mon alternance s'est déroulée au sein d'un environnement de travail stimulant, caractérisé par une forte culture d'entreprise et une organisation agile et moderne. Cette section détaille les conditions de travail, l'environnement technique, et les méthodologies qui régissent le quotidien au sein de la société.
+Mon alternance s'est déroulée dans un cadre de travail formateur, caractérisé par une forte culture d'entreprise et une organisation agile et moderne. Cette section détaille les conditions de travail, l'environnement technique, et les méthodologies qui régissent le quotidien au sein de la société.
 
 == Conditions de travail et intégration
 
-L'environnement de travail au sein de l'entreprise se distingue par une culture fondée sur la confiance, l'autonomie et la prise d'initiative. Avec une équipe d'une cinquantaine de personnes, l'organisation conserve une hiérarchie aplatie qui favorise la communication directe et la collaboration.
+L'environnement de travail au sein de l'entreprise se distingue par une culture fondée sur la confiance, l'autonomie et la prise d'initiative. Avec une équipe d'une cinquantaine de personnes, l'organisation privilégie une structure horizontale qui favorise la communication directe.
 
-Un aspect particulièrement marquant est son modèle d'actionnariat salarié universel : chaque employé est actionnaire, ce qui aligne les intérêts de tous sur le succès collectif de l'entreprise. La transparence est également une valeur clé, avec une communication ouverte sur les résultats et la stratégie de l'entreprise.
+Le modèle d'actionnariat salarié universel est un pilier de la culture d'entreprise : chaque employé étant actionnaire, les intérêts individuels convergent vers le succès collectif. La transparence est également une valeur clé, avec une communication ouverte sur les résultats et la stratégie de l'entreprise.
 
 L'intégration des nouveaux arrivants, et notamment des alternants, est facilitée par un système de mentorat et des perspectives d'évolution interne concrètes, illustrées par des parcours comme celui du Lead Mobile, qui a débuté en tant que stagiaire.
 
@@ -199,7 +196,7 @@ L'équipe de développement maîtrise un large éventail de langages et framewor
 #no-numbering()
 ==== Infrastructure et déploiement
 
-L'infrastructure est hébergée sur le #g("cloud") français OVHcloud pour garantir la conformité #g("rgpd"). L'architecture distribuée s'appuie sur la conteneurisation avec #g("docker"), probablement orchestrée par #g("kubernetes"). Les bases de données suivent une approche multi-modèle, combinant probablement des bases de données relationnelles (#g("sql")), #g("nosql") (pour les séries temporelles des capteurs) et un cache en mémoire comme #g("redis") pour les données temps réel.
+L'infrastructure est hébergée sur le #g("cloud") français OVHcloud pour garantir la conformité #g("rgpd"). L'architecture distribuée s'appuie sur la conteneurisation avec #g("docker"), orchestrée par #g("kubernetes"). Les bases de données suivent une approche multi-modèle, combinant des bases de données relationnelles (#g("sql")), du #g("nosql") (pour les séries temporelles des capteurs) et un cache en mémoire avec #g("redis") pour les données temps réel.
 
 #no-numbering()
 ==== Architecture logicielle : Clean Architecture
@@ -357,7 +354,7 @@ Conformément à la culture d'autonomie, les développeurs ont la liberté de ch
 #no-numbering()
 ==== Sécurité et accès aux ressources
 
-La sécurité est une priorité absolue. La plateforme est entièrement conforme au #g("rgpd", mode: "long"), avec des mesures strictes d'anonymisation des données, de limitation de la durée de conservation et de chiffrement (#g("ssl")).
+La sécurité des données est au cœur des développements. La plateforme respecte le #g("rgpd", mode: "long"), avec des mesures strictes d'anonymisation des données, de limitation de la durée de conservation et de chiffrement (#g("ssl")).
 En complément de cette conformité, l'entreprise est actuellement en démarche pour obtenir la certification #g("iso27001"), la norme internationale de référence pour les systèmes de management de la sécurité de l'information, afin de formaliser et d'attester de la robustesse de ses processus.
 
 #no-numbering()
@@ -425,7 +422,7 @@ Chaque commit référence également le ticket Jira correspondant, ajouté en fi
 
 Cette pratique assure la traçabilité bidirectionnelle entre le code et les tickets : depuis l'historique git, on retrouve le contexte fonctionnel de chaque changement ; depuis Jira, on accède directement aux commits et aux pull requests associés.
 
-Ces règles ne reposent pas sur la bonne volonté des développeurs : elles sont *mécaniquement enforced* par un hook pre-commit via *commitlint*. Le fichier `.commitlintrc.json` à la racine du dépôt définit les contraintes :
+Ces règles ne reposent pas sur la bonne volonté des développeurs : elles sont *appliquées mécaniquement* par un hook pre-commit via *commitlint*. Le fichier `.commitlintrc.json` à la racine du dépôt définit les contraintes :
 
 #code(
     ```json
@@ -506,7 +503,7 @@ Cette organisation, combinée à des équipes cross-fonctionnelles, permet de li
 #no-numbering()
 ==== Pipeline #g("cicd")
 
-Le pipeline de #g("cicd") est au cœur de la méthodologie de développement. Il automatise la compilation, les tests et le déploiement du code, garantissant ainsi une haute qualité et une grande vélocité.
+Le pipeline de #g("cicd") automatise la compilation, les tests et le déploiement du code, ce qui fiabilise les mises en production et accélère les cycles de développement.
 
 #no-numbering()
 ==== Versionnage sémantique
@@ -516,7 +513,7 @@ L'équipe de développement suit les conventions du #g("semver", mode: "long") p
 #no-numbering()
 ==== Architecture orientée services
 
-L'architecture #g("microservices") permet de découpler les différentes parties de la plateforme. Chaque service est responsable d'une fonctionnalité métier spécifique et peut être développé, déployé et mis à l'échelle indépendamment des autres. #g("kafka") joue un rôle crucial en permettant à ces services de communiquer de manière asynchrone et fiable.
+L'architecture #g("microservices") permet de découpler les différentes parties de la plateforme. Chaque service est responsable d'une fonctionnalité métier spécifique et peut être développé, déployé et mis à l'échelle indépendamment des autres. #g("kafka") assure la communication asynchrone et fiable entre ces services.
 
 #figure(
   image("./assets/d2/microservices_architecture.svg", width: 100%),
@@ -531,7 +528,7 @@ La qualité est assurée par une combinaison de revues de code systématiques, d
 #no-numbering()
 ==== Sécurité #g("docker")
 
-L'utilisation de #g("docker") suit les meilleures pratiques de sécurité, notamment l'utilisation d'images de base minimalistes et vérifiées, la gestion des secrets en dehors des images, et potentiellement l'analyse des images pour détecter des vulnérabilités connues.
+L'utilisation de #g("docker") suit les meilleures pratiques de sécurité, notamment l'utilisation d'images de base minimalistes et vérifiées, la gestion des secrets en dehors des images, et l'analyse systématique des images pour détecter d'éventuelles vulnérabilités.
 
 #no-numbering()
 ==== Onboarding et documentation
@@ -541,11 +538,11 @@ L'intégration des nouveaux membres est une priorité. Le mentorat par des membr
 #no-numbering()
 ==== Communication et collaboration
 
-La communication est fluide et directe grâce à la hiérarchie aplatie. Les équipes cross-fonctionnelles travaillent en étroite collaboration au quotidien. Les outils de messagerie instantanée et de gestion de projet viennent supporter ces échanges.
+La communication est fluide grâce à la structure horizontale. Les équipes cross-fonctionnelles travaillent en étroite collaboration au quotidien. Les outils de messagerie instantanée et de gestion de projet viennent supporter ces échanges.
 
 == Conclusion partielle
 
-Cet environnement de travail est celui d'une #g("scaleup") technologique mature, qui a su conserver l'agilité et l'esprit d'initiative d'une startup tout en mettant en place des processus robustes pour garantir la qualité, la sécurité et la scalabilité de sa plateforme. La culture d'entreprise, axée sur l'autonomie, la transparence et l'intéressement collectif, constitue un atout majeur pour attirer et retenir les talents.
+Cet environnement de travail est celui d'une #g("scaleup") technologique mature, qui a su conserver l'agilité et l'esprit d'initiative d'une startup tout en mettant en place des processus robustes pour garantir la qualité, la sécurité et la scalabilité de sa plateforme. La culture d'entreprise, axée sur l'autonomie et l'intéressement collectif, favorise l'engagement des collaborateurs.
 
 = Missions
 
@@ -576,7 +573,7 @@ Le flux d'exécution suit la chaîne suivante :
 Cette requête présentait des problèmes de performance critiques pour les plages de dates supérieures à un mois. Les requêtes prenaient plus de 90 secondes pour des périodes de 30 jours et crashaient complètement pour des requêtes sur une année entière.
 
 #no-numbering()
-==== Symptômes observés:
+==== Symptômes observés
 
 - Requêtes sur 30 jours : *90+ secondes*
 - Requête sur 1 an : *Timeout* (crash complet)
@@ -604,7 +601,7 @@ Le problème résidait dans l'architecture des requêtes du `AttendanceStatsRepo
 - Impossibilité d'utiliser l'index de clé primaire `(measuring_set_id, record_datetime_utc)`
 - Nécessité d'un parcours complet de la table (#g("fulltablescan"))
 - Parsing #g("json") pour chaque ligne de la table
-- Performance dégradant de manière exponentielle avec la taille de la période
+- Performance se dégradant de manière exponentielle avec la taille de la période
 
 #no-numbering()
 === Phase d'analyse et pistes explorées
@@ -825,7 +822,7 @@ Le problème de la requête d'origine était précisément que `JSON_EXTRACT(h.c
 #no-numbering()
 ==== Trade-off et analyse coût-bénéfice
 
-La stratégie en deux étapes introduit un appel reseau supplementaire, ce qui peut sembler contre-intuitif. L'analyse chiffree justifie ce choix :
+La stratégie en deux étapes introduit un appel réseau supplémentaire, ce qui peut sembler contre-intuitif. L'analyse chiffrée justifie ce choix :
 
 #my-block(
     content-align: left,
@@ -835,7 +832,7 @@ La stratégie en deux étapes introduit un appel reseau supplementaire, ce qui p
   #table(
     columns: (2fr, 1fr, 1fr),
     align: (left, right, right),
-    [*Operation*], [*Avant*], [*Après*],
+    [*Opération*], [*Avant*], [*Après*],
     [Appel HTTP `getMeasuringSets`], [absent], [~10-20 ms],
     [Requête SQL (30 jours)], [90+ secondes], [~20-30 ms],
     [Requête SQL (1 an)], [timeout], [~200 ms],
@@ -843,9 +840,9 @@ La stratégie en deux étapes introduit un appel reseau supplementaire, ce qui p
   )
 ]
 
-L'appel HTTP vers `sensors-service` retourne une liste de quelques dizaines d'identifiants : la reponse est petite, le service est interne au reseau prive, et la latence est negligeable au regard des 90 secondes economisees. C'est un cout fixe et previsible, independant de la periode interrogee.
+L'appel HTTP vers `sensors-service` retourne une liste de quelques dizaines d'identifiants : la réponse est petite, le service est interne au réseau privé, et la latence est négligeable au regard des 90 secondes économisées. C'est un coût fixe et prévisible, indépendant de la période interrogée.
 
-A l'inverse, le parsing JSON ligne par ligne croissait lineairement avec le volume de donnees : plus la periode etait longue, plus la table etait parcourue en entier, et plus le temps d'execution explosait. Pour une requete annuelle, la table entiere devait etre lue, parsee et filtree, saturant a la fois le CPU du serveur MySQL et ses I/O disque.
+À l'inverse, le parsing JSON ligne par ligne croissait linéairement avec le volume de données : plus la période était longue, plus la table était parcourue en entier, et plus le temps d'exécution explosait. Pour une requête annuelle, la table entière devait être lue, parsée et filtrée, saturant à la fois le CPU du serveur MySQL et ses I/O disque.
 
 #no-numbering()
 === Impact en production
@@ -855,7 +852,7 @@ Cette optimisation a permis de :
 - Rendre les dashboards réactifs pour des statistiques annuelles en temps réel
 - Réduire drastiquement la charge sur la base de données
 - Éliminer les erreurs de timeout pour les requêtes multi-mois
-- Améliorer significativement l'expérience utilisateur avec des réponses instantanées
+- Fluidifier l'expérience utilisateur par des réponses instantanées
 
 #no-numbering()
 === Conformité aux patterns existants
@@ -875,7 +872,7 @@ La solution réutilise l'infrastructure existante (`SensorsInternalHttpRepositor
 1. *Conscience des index* : Toujours concevoir les requêtes autour des index disponibles
 2. *Prudence avec les colonnes #g("json")* : Le filtrage sur des champs #g("json") empêche l'utilisation d'index
 3. *Requêtes en deux étapes* : Ajouter une étape de lookup légère peut être plus rapide qu'une requête unique non optimisée
-4. *Mesurer systématiquement* : L'amélioration de `x2 250` a été validée par des mesures en production réelle
+4. *Mesurer systématiquement* : L'amélioration de ×2 250 a été validée par des mesures en production réelle
 5. *Suivre les patterns existants* : La solution réutilise l'architecture établie du projet
 
 #no-numbering()
@@ -888,7 +885,7 @@ La solution réutilise l'infrastructure existante (`SensorsInternalHttpRepositor
 
 
 *Date de réalisation* : Octobre 2025 \
-*Statut* : [OK] Deployé en production et valide avec du trafic reel
+*Statut* : [OK] Déployé en production et validé avec du trafic réel
 
 #pagebreak()
 == Création du `app-service`
@@ -934,7 +931,7 @@ Créer `app-service` comme service distinct permet de versionner et déployer in
 #no-numbering()
 ==== REST ou GraphQL ?
 
-`stats-service` utilise GraphQL (GraphQL Yoga + Type-GraphQL), et la question s'est posée d'adopter le même protocole. GraphQL a été écarté : les consommateurs de `app-service` effectuent des opérations CRUD classiques (créer un appareil, récupérer par identifiant, mettre à jour), sans besoin de sélection de champs dynamique. Une API REST versionnée (`/v1/`) est plus simple à maintenir et s'aligne avec les conventions des autres services internes de l'équipe.
+`stats-service` utilise GraphQL (GraphQL Yoga + Type-GraphQL), et la question s'est posée d'adopter le même protocole. GraphQL a été écarté : les consommateurs de `app-service` effectuent des opérations CRUD classiques (créer un appareil, récupérer par identifiant, mettre à jour), sans besoin de sélection de champs dynamique. Une API REST versionnée (`/v1/`) est plus simple à maintenir et s'aligne sur les conventions des autres services internes de l'équipe.
 
 #no-numbering()
 ==== Stratégie de révocation des appareils
@@ -942,7 +939,7 @@ Créer `app-service` comme service distinct permet de versionner et déployer in
 La question de la gestion de l'interdiction d'un appareil a également fait l'objet d'une analyse. Deux approches ont été évaluées :
 
 - *Suppression physique* : supprimer la ligne en base lors d'une révocation. Simple, mais elle détruit l'historique et empêche tout audit a posteriori.
-- *Révocation logique avec `revokedAt`* : marquer l'appareil comme révoqué en conservant la ligne, avec horodatage et motif. Retenue car elle préserve l'historique complet et s'aligne avec la contrainte d'unicité `(identifier, revokedAt)` déjà présente sur la table `psn.appareils`, qui permet à un même identifiant physique (un téléphone réinstallant l'application) d'avoir plusieurs entrées historiques tout en garantissant qu'une seule reste active.
+- *Révocation logique avec `revokedAt`* : marquer l'appareil comme révoqué en conservant la ligne, avec horodatage et motif. Retenue car elle préserve l'historique complet et s'aligne sur la contrainte d'unicité `(identifier, revokedAt)` déjà présente sur la table `psn.appareils`, qui permet à un même identifiant physique (un téléphone réinstallant l'application) d'avoir plusieurs entrées historiques tout en garantissant qu'une seule reste active.
 
 #no-numbering()
 === Architecture mise en place
@@ -1091,7 +1088,7 @@ Le service est initialisé avec un ensemble de middlewares communs issus de `@af
 - Injection d'un identifiant de requête (`requestId`)
 - Exposition de métriques Prometheus (`/metrics`)
 
-L'*OpenTelemetry* (OTel) est initialisée *avant* l'import de NestJS, conformément aux exigences de l'instrumentation automatique.
+L'instrumentation *OpenTelemetry* (OTel) est initialisée *avant* l'import de NestJS, conformément aux exigences de l'instrumentation automatique.
 
 #no-numbering()
 === Résultat
@@ -1104,7 +1101,7 @@ Le service `app-service` a été mergé et déployé en environnement d'intégra
 #pagebreak()
 = Conclusion
 
-Cette première année d'alternance au sein d'#link(<affluences>)[Affluences] constitue le point de départ de mon parcours d'ingénieur et ma première immersion durable dans un environnement de développement à grande échelle. Au-delà de la découverte d'une entreprise et d'une équipe, elle m'a confronté à des problématiques techniques réelles, en production, où chaque décision a un coût et un impact mesurables, là où le cadre académique reste par nature simplifié.
+Cette première année d'alternance au sein d'#link(<affluences>)[Affluences] constitue le point de départ de mon parcours d'ingénieur et ma première immersion durable dans un environnement de développement à grande échelle. Au-delà de la découverte d'une entreprise et d'une équipe, elle m'a confronté à des problématiques techniques réelles, en production, où chaque décision a un coût et un impact mesurables, contrairement au cadre académique, souvent plus théorique.
 
 #no-numbering()
 == Bilan des compétences acquises
@@ -1116,9 +1113,9 @@ Sur le plan technique, les deux missions présentées dans ce rapport ont struct
     title: "Synthèse des compétences développées",
     width: 100%
 )[
-  - *Savoir-faire technique* : #g("clean", mode: "short") Architecture, #g("nestjs")/#g("typescript"), TypeORM, optimisation de requêtes MySQL, #g("di") via #g("ioc").
+  - *Savoir-faire technique* : Clean Architecture, #g("nestjs")/#g("typescript"), TypeORM, optimisation de requêtes MySQL, #g("di") via #g("ioc").
   - *Méthodologie* : workflow Git structuré, commits conventionnels, revue de code, intégration dans un pipeline de #g("cicd").
-  - *Savoir-être* : travail en autonomie dans une hiérarchie aplatie, identification du bon moment pour solliciter de l'aide, lecture d'un codebase existant pour en respecter les conventions.
+  - *Savoir-être* : autonomie au sein d'une organisation peu hiérarchisée, identification du bon moment pour solliciter de l'aide, lecture d'un codebase existant pour en respecter les conventions.
 ]
 
 Un enseignement transversal mérite d'être souligné : sur les deux missions, la meilleure solution n'était pas la plus inventive, mais celle *déjà présente dans le codebase sous une autre forme*. Apprendre à lire le code des autres avant d'écrire le mien a sans doute été l'acquis le plus structurant de l'année.
@@ -1126,7 +1123,7 @@ Un enseignement transversal mérite d'être souligné : sur les deux missions, l
 #no-numbering()
 == Articulation entre la formation et l'entreprise
 
-L'enseignement qui a le plus directement résonné avec mon travail a été le cours d'optimisation de bases de données relationnelles // À PERSONNALISER : intitulé/code exact de l'UE (SGBDR – Opti BD)
+L'enseignement qui a le plus directement résonné avec mon travail a été le cours d'optimisation de bases de données relationnelles `SGBDR - Opti BD`.
 suivi cette année au CNAM. La mission d'optimisation de la requête `getAttendanceStatsForAPeriod` en a constitué une application grandeur nature, à un détail près qui change tout : là où le cours raisonne sur des tables de quelques dizaines de pages, je manipulais une table de plusieurs millions de lignes, où la moindre erreur de conception se paie en dizaines de secondes.
 
 Le cours m'a d'abord donné la *grille de lecture* du problème. Il présente le cycle de vie d'une requête SQL : le passage de l'expression algébrique au plan d'exécution, choisi par l'optimiseur pour minimiser les accès disque, l'I/O étant l'opération coûteuse. Cette idée que *le coût se compte en pages lues* est exactement ce qui se jouait dans ma requête : les 4,6 millions de lignes parcourues n'étaient pas un problème de CPU mais un problème d'accès disque, chaque ligne entraînant une lecture de page suivie d'un parsing #g("json").
@@ -1146,8 +1143,8 @@ La solution elle-même découle directement des notions vues en cours. Le passag
   - *Index composite et ordre des colonnes* $arrow.r$ filtrage par `measuring_set_id` puis `record_datetime_utc`.
 ]
 
-Cette articulation a fonctionné dans les deux sens. Le cours m'a fourni le vocabulaire et les modèles de coût pour *nommer* et *justifier* ce que j'observais empiriquement ; réciproquement, voir ces concepts produire un gain mesurable en production // À PERSONNALISER si tu veux : "(un facteur 2 250 sur les requêtes de 30 jours)"
-leur a donné une consistance que l'exercice académique, par nature simplifié, ne permet pas d'atteindre. C'est précisément la synergie entre vécu professionnel et apport académique que vise l'alternance.
+Cette articulation a fonctionné dans les deux sens. Le cours m'a fourni le vocabulaire et les modèles de coût pour *nommer* et *justifier* ce que j'observais empiriquement ; réciproquement, voir ces concepts produire un gain mesurable en production (un facteur 2 250 sur les requêtes de 30 jours).
+leur a donné une consistance que l'exercice académique, par définition limité à des cas d'école, ne permet pas d'atteindre. C'est précisément la synergie entre vécu professionnel et apport académique que vise l'alternance.
 
 #no-numbering()
 == Difficultés rencontrées et manques identifiés
@@ -1311,11 +1308,11 @@ Ce mémoire constitue lui-même un cas d'usage avancé du template : la table de
 
 = Glossaire <glossaire>
 
-Ce glossaire regroupe les termes techniques utilises dans ce document, classés par categorie pour faciliter la comprehension.
+Ce glossaire regroupe les termes techniques utilisés dans ce document, classés par catégorie pour faciliter la compréhension.
 
 #{
   // Affichage personnalisé du glossaire par groupe
-  let groups = ("Developpement", "Infrastructure", "Donnees", "Methodologie", "Securite", "Entreprise")
+  let groups = ("Développement", "Infrastructure", "Données", "Méthodologie", "Sécurité", "Entreprise")
 
   for group in groups {
     // Filtrer les termes de ce groupe
@@ -1332,7 +1329,7 @@ Ce glossaire regroupe les termes techniques utilises dans ce document, classés 
         inset: 6pt,
         stroke: 0.5pt + luma(180),
         align: (left, left),
-        table.header([*Terme*], [*Definition*]),
+        table.header([*Terme*], [*Définition*]),
         ..terms.map(pair => {
           let key = pair.at(0)
           let entry = pair.at(1)
