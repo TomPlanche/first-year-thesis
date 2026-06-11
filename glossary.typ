@@ -169,6 +169,12 @@
     description: "Operation de base de donnees ou le moteur utilise un index (B-Tree) pour acceder directement aux lignes pertinentes, sans lire l'ensemble de la table. Le cout est proportionnel au nombre de resultats, pas a la taille totale de la table.",
     group: "Donnees",
   ),
+  icp: (
+    short: "ICP",
+    long: "Index Condition Pushdown",
+    description: "Optimisation MySQL qui evalue certaines conditions WHERE directement au niveau du parcours d'index, avant de recuperer la ligne complete depuis le disque. Reduit le nombre d'acces disque, mais ne remplace pas un index sur la colonne filtree.",
+    group: "Donnees",
+  ),
 
   // === Methodologie ===
   agile: (

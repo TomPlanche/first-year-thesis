@@ -584,6 +584,7 @@ Cette requête présentait des problèmes de performance critiques pour les plag
 - Impact négatif sur l'expérience utilisateur des dashboards
 
 
+#pagebreak()
 #no-numbering()
 === Analyse technique de la cause racine
 
@@ -605,12 +606,84 @@ Le problème résidait dans l'architecture des requêtes du `AttendanceStatsRepo
 - Parsing #g("json") pour chaque ligne de la table
 - Performance dégradant de manière exponentielle avec la taille de la période
 
+#no-numbering()
+=== Phase d'analyse et pistes explorées
+
+Identifier la cause racine ne suffisait pas : il fallait choisir comment la corriger. Plusieurs pistes ont été évaluées avant d'arrêter la solution finale.
+
+#no-numbering()
+==== Diagnostic par le plan d'exécution
+
+La première étape a été de confirmer le diagnostic en examinant le plan d'exécution avec `EXPLAIN` :
+
+#code(
+    ```text
+    EXPLAIN SELECT MAX(h.data_points -> "$.occupancy") AS max_occ,
+                   MIN(h.data_points -> "$.occupancy") AS min_occ
+              FROM histories h
+             WHERE JSON_EXTRACT(h.contextual_data, "$.site_id") = 117
+               AND h.record_datetime_utc BETWEEN "2025-01-01" AND "2025-01-31"
+               AND JSON_EXTRACT(h.data_points, "$.occupancy") IS NOT NULL;
+
+    +----+-------+-----------------+-----------------+---------+---------+----------+------------------------+
+    | id | type  | possible_keys   | key             | key_len | rows    | filtered | Extra                  |
+    +----+-------+-----------------+-----------------+---------+---------+----------+------------------------+
+    |  1 | range | record_datetime | record_datetime | 5       | 4655058 |   100.00 | Using index condition; |
+    |    |       |                 |                 |         |         |          | Using where            |
+    +----+-------+-----------------+-----------------+---------+---------+----------+------------------------+
+    ```,
+    numbering: false,
+    text-style: (font: "Monaspace Krypton", size: 7.5pt)
+)
+
+La lecture de ce plan révèle une situation plus subtile qu'un simple #g("fulltablescan"). MySQL utilise bien l'index `record_datetime` pour borner la plage temporelle (`type: range`, `key: record_datetime`), ce qui est cohérent avec la clause `BETWEEN`. Mais trois éléments alertent :
+
+- *`rows: 4 655 058`* : MySQL doit examiner plus de 4 millions de lignes pour couvrir la période demandée. L'index lui permet de se limiter à la fenêtre temporelle, mais à l'intérieur de cette fenêtre, chaque ligne doit être accédée individuellement.
+- *`filtered: 100`* : MySQL ne dispose d'aucune statistique sur les champs JSON et ne peut donc pas estimer la sélectivité de `JSON_EXTRACT(contextual_data, "$.site_id") = 117`. Afficher 100 % signifie ici "je ne sais pas". En réalité, un `site_id` donné représente une fraction de ces 4 millions de lignes ; la majorité des accès sont donc inutiles.
+- *`Extra: Using index condition; Using where`* : la condition temporelle est évaluée au niveau de l'index (#g("icp", mode: "both")), mais le filtre JSON oblige MySQL à récupérer la ligne complète depuis le disque pour chaque entrée de l'index. Sur 4 millions de lignes, ce sont 4 millions de lectures de pages disque aléatoires, auxquelles s'ajoutent 4 millions d'opérations de parsing JSON.
+
+C'est cette combinaison, volume de lignes à parcourir multiplié par le coût du parsing JSON par ligne, qui explique les 90 secondes observées pour une période de 30 jours et le crash pour une année entière. Ce constat a orienté la recherche vers la structure des données plutôt que vers la logique applicative.
+
+#no-numbering()
+==== Colonne générée et indexation directe
+
+La première idée explorée était d'ajouter une colonne générée persistée sur la table `stats.histories` pour extraire le `site_id` du champ JSON et l'indexer :
+
+#code(
+    ```sql
+    ALTER TABLE stats.histories
+      ADD COLUMN site_id INT GENERATED ALWAYS AS (
+          JSON_EXTRACT(contextual_data, '$.site_id')
+      ) STORED,
+      ADD INDEX idx_site_id (site_id);
+    ```,
+    numbering: false,
+    text-style: (font: "Monaspace Krypton", size: 8pt)
+)
+
+Cette approche aurait permis d'indexer le `site_id` sans modifier la logique applicative existante. Elle a été écartée pour deux raisons. D'abord, une migration DDL sur une table de plusieurs millions de lignes présente un risque opérationnel en production : la durée d'exécution et les verrous potentiels nécessiteraient un outil de migration en ligne, ajoutant une complexité disproportionnée. Ensuite, cette approche contourne le problème plutôt qu'elle ne le résout : `site_id` n'est pas une propriété naturelle de la table `histories`. Sa présence dans `contextual_data` est elle-même le symptôme d'un couplage de conception que l'on ne voulait pas bétonner davantage.
+
+#no-numbering()
+==== Cache applicatif
+
+Une couche de cache Redis sur les résultats agrégés (clé `siteId + période`) aurait pu absorber les requêtes répétées. Cette piste a rapidement été abandonnée : les utilisateurs des dashboards explorent des plages temporelles variées et rarement identiques, ce qui conduirait à un taux de cache hit très faible. Plus fondamentalement, un cache ne résout pas le problème de fond ; il le masque sans empêcher la saturation de la base de données lors d'une montée en charge simultanée sur des requêtes distinctes.
+
+#no-numbering()
+==== Pré-agrégation dans une table dédiée
+
+Maintenir une table de résultats pré-calculés (min/max par site et par jour) aurait éliminé les calculs à la demande. Cette stratégie est pertinente pour des systèmes à très fort trafic en lecture, mais elle introduit un job de maintenance, une gestion de la fraîcheur des données, et une surface de bugs supplémentaire. Le rapport effort/bénéfice n'était pas justifié ici, où la vraie cause était une requête mal conçue, pas un volume de calcul intrinsèquement élevé.
+
+#no-numbering()
+==== Convergence vers la solution retenue
+
+L'élément déclencheur de la solution finale a été la lecture du codebase existant. D'autres services du même projet (`attendance.service.ts`, `record-history-mysql.repository.ts`) résolvent exactement le même problème selon le même pattern : interroger d'abord `sensors-service` pour obtenir les `measuring_set_ids`, puis filtrer par ces identifiants indexés. La solution existait déjà dans le projet sous une autre forme. Ce constat a validé l'approche et ancré la correction dans les conventions établies de la codebase, plutôt que d'introduire un nouveau mécanisme.
+
 === Solution architecturale
 
 L'optimisation a consisté à inverser la stratégie de requêtage pour exploiter l'indexation existante de la base de données.
 
 #figure(
-  image("./assets/d2/query_plan_comparison.svg", width: 100%),
+  image("./assets/d2/query_plan_comparison.svg", width: 90%),
   caption: [Comparaison des plans d'exécution avant et après l'optimisation]
 )
 
@@ -843,6 +916,33 @@ Cette première version avait pour périmètre la mise en place de la *base du p
 La contrainte principale était l'*échelle* : la table `psn.appareils` contient des millions de lignes. Toute décision d'architecture (indexation, pagination, requêtes) devait tenir compte de cette volumétrie.
 
 La stack choisie est *NestJS* avec *TypeORM* pour l'accès à la base *MySQL*, en suivant les conventions du projet (`@affluences/commons`). Le service expose une #g("api") REST versionnée (v1).
+
+#no-numbering()
+=== Réflexion architecturale préalable
+
+La création d'un nouveau service implique une série de décisions d'architecture qui ont dû être tranchées avant d'écrire la première ligne de code.
+
+#no-numbering()
+==== Nouveau service ou extension de l'existant ?
+
+La première question était de déterminer si la logique de gestion des appareils devait être intégrée dans `app-api` ou isolée dans un service dédié.
+
+L'intégration dans `app-api` aurait été la voie la plus rapide à court terme : le service existait déjà, il communique directement avec les applications mobiles, et il avait accès aux mêmes bases de données. Mais cette approche aurait concentré dans un seul service deux responsabilités distinctes : la passerelle vers les clients externes (rôle d'`app-api`) et la gestion interne des entités appareils (rôle métier). À mesure que la logique appareils grossit, ce couplage génère de la friction : déployer un changement de règle de validation d'appareil impliquerait de redéployer toute la passerelle.
+
+Créer `app-service` comme service distinct permet de versionner et déployer indépendamment la logique appareils, et de l'exposer à d'autres consommateurs internes sans passer par `app-api`.
+
+#no-numbering()
+==== REST ou GraphQL ?
+
+`stats-service` utilise GraphQL (GraphQL Yoga + Type-GraphQL), et la question s'est posée d'adopter le même protocole. GraphQL a été écarté : les consommateurs de `app-service` effectuent des opérations CRUD classiques (créer un appareil, récupérer par identifiant, mettre à jour), sans besoin de sélection de champs dynamique. Une API REST versionnée (`/v1/`) est plus simple à maintenir et s'aligne avec les conventions des autres services internes de l'équipe.
+
+#no-numbering()
+==== Stratégie de révocation des appareils
+
+La question de la gestion de l'interdiction d'un appareil a également fait l'objet d'une analyse. Deux approches ont été évaluées :
+
+- *Suppression physique* : supprimer la ligne en base lors d'une révocation. Simple, mais elle détruit l'historique et empêche tout audit a posteriori.
+- *Révocation logique avec `revokedAt`* : marquer l'appareil comme révoqué en conservant la ligne, avec horodatage et motif. Retenue car elle préserve l'historique complet et s'aligne avec la contrainte d'unicité `(identifier, revokedAt)` déjà présente sur la table `psn.appareils`, qui permet à un même identifiant physique (un téléphone réinstallant l'application) d'avoir plusieurs entrées historiques tout en garantissant qu'une seule reste active.
 
 #no-numbering()
 === Architecture mise en place
@@ -1105,11 +1205,12 @@ Ce qui produit directement :
 
 Le message est conforme au pattern de la `headerPattern` du `.commitlintrc.json` et sera accepté par le hook pre-commit sans modification manuelle.
 
+#pagebreak()
 == Rédaction avec Typst et `clean-cnam-template`
 
 === Typst, une alternative moderne à LaTeX
 
-Ce mémoire n'a pas été rédigé avec un traitement de texte classique ni avec LaTeX, mais avec #link("https://typst.app/")[Typst], un système de composition de documents de nouvelle génération. Typst adopte une syntaxe légère et expressive, une compilation quasi-instantanée, et un système de packages communautaire, ce qui en fait une alternative pragmatique à LaTeX pour la rédaction de documents techniques et académiques.
+Ce mémoire n'a pas été rédigé avec un traitement de texte classique ni avec LaTeX, mais avec #link("https://typst.app/")[Typst], un système de composition de documents de nouvelle génération écrit en Rust. Typst adopte une syntaxe légère et expressive, une compilation quasi-instantanée, et un système de packages communautaire, ce qui en fait une alternative pragmatique à LaTeX pour la rédaction de documents techniques et académiques.
 
 === Un package open source dédié au CNAM
 

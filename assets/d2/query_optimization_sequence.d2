@@ -6,14 +6,14 @@ sensors: "SensorsInternalHttpRepository"
 repo: "AttendanceStatsRepository"
 db: "MySQL"
 
-resolver -> controller: "getAttendanceStatsForAPeriod(siteId, from, to)"
+resolver -> controller: "getAttendanceStatsForAPeriod()"
 
-controller -> sensors: "getMeasuringSets({ siteIds: [siteId] })"
-sensors -> controller: "measuringSetIds[]  (~10-20 ms)"
+controller -> sensors: "getMeasuringSets()"
+sensors -> controller: "measuringSetIds[]\n(~10-20 ms)"
 
-controller -> repo: "getStats(measuringSetIds, from, to)"
-repo -> db: "WHERE measuring_set_id IN (...)\n  AND record_datetime_utc BETWEEN ..."
-db -> repo: "résultats (index seek)"
+controller -> repo: "getStats()"
+repo -> db: "WHERE measuring_set_id IN (...)\nAND record_datetime_utc BETWEEN ..."
+db -> repo: "résultats\n(index seek)"
 repo -> controller: "AttendanceStats"
 
-controller -> resolver: "réponse (~40 ms total)"
+controller -> resolver: "réponse\n(~40 ms total)"
